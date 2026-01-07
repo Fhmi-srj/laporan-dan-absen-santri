@@ -15,8 +15,10 @@ $pageTitle = 'Jadwal Absen';
 // Handle Actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] === 'delete' && !empty($_POST['id'])) {
-        $pdo->prepare("DELETE FROM jadwal_absens WHERE id = ?")->execute([$_POST['id']]);
-        redirectWith('jadwal.php', 'success', 'Jadwal berhasil dihapus!');
+        // Soft delete - move to trash
+        $pdo->prepare("UPDATE jadwal_absens SET deleted_at = NOW(), deleted_by = ? WHERE id = ?")->execute([$user['id'], $_POST['id']]);
+        logActivity('DELETE', 'jadwal_absens', $_POST['id'], null, null, null, 'Hapus jadwal ke trash');
+        redirectWith('jadwal.php', 'success', 'Jadwal dipindahkan ke trash!');
     }
     if ($_POST['action'] === 'store') {
         $stmt = $pdo->prepare("INSERT INTO jadwal_absens (name, type, start_time, scheduled_time, end_time, late_tolerance_minutes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())");
@@ -45,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 }
 
-$jadwalList = $pdo->query("SELECT * FROM jadwal_absens ORDER BY start_time ASC")->fetchAll();
+$jadwalList = $pdo->query("SELECT * FROM jadwal_absens WHERE deleted_at IS NULL ORDER BY start_time ASC")->fetchAll();
 ?>
 <?php include __DIR__ . '/../include/header.php'; ?>
 <?php include __DIR__ . '/../include/sidebar.php'; ?>

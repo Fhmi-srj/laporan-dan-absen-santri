@@ -198,30 +198,30 @@ $roleLabels = [
 
     <div class="sidebar-scroll">
         <ul class="sidebar-menu">
-            <!-- DASHBOARD - All Roles -->
+            <!-- BERANDA - All Roles -->
             <li>
-                <a href="<?= $basePath ?>dashboard.php" class="<?= $currentPage === 'dashboard.php' ? 'active' : '' ?>">
-                    <i class="fas fa-home"></i> Dashboard
+                <a href="<?= $basePath ?>beranda.php" class="<?= $currentPage === 'beranda.php' ? 'active' : '' ?>">
+                    <i class="fas fa-home"></i> Beranda
                 </a>
             </li>
 
             <div class="sidebar-divider"></div>
             <div class="sidebar-header">Absensi - Scan QR</div>
 
-            <!-- SCANNER QR - All Roles -->
+            <!-- PEMINDAI QR - All Roles -->
             <li>
-                <a href="<?= $basePath ?>scanner.php" class="<?= $currentPage === 'scanner.php' ? 'active' : '' ?>">
-                    <i class="fas fa-qrcode"></i> Scanner QR Code
+                <a href="<?= $basePath ?>pemindai.php" class="<?= $currentPage === 'pemindai.php' ? 'active' : '' ?>">
+                    <i class="fas fa-qrcode"></i> Pemindai QR Code
                 </a>
             </li>
 
             <div class="sidebar-divider"></div>
             <div class="sidebar-header">Kartu RFID</div>
 
-            <!-- RFID REGISTER - All Roles -->
+            <!-- DAFTAR RFID - All Roles -->
             <li>
-                <a href="<?= $basePath ?>rfid-register.php"
-                    class="<?= $currentPage === 'rfid-register.php' ? 'active' : '' ?>">
+                <a href="<?= $basePath ?>daftar-rfid.php"
+                    class="<?= $currentPage === 'daftar-rfid.php' ? 'active' : '' ?>">
                     <i class="fas fa-id-card"></i> Daftarkan Kartu
                 </a>
             </li>
@@ -230,17 +230,17 @@ $roleLabels = [
             <div class="sidebar-divider"></div>
             <div class="sidebar-header">Monitoring</div>
 
-            <!-- LIVE ATTENDANCE - All Roles -->
+            <!-- ABSENSI LANGSUNG - All Roles -->
             <li>
-                <a href="<?= $basePath ?>live-attendance.php"
-                    class="<?= $currentPage === 'live-attendance.php' ? 'active' : '' ?>">
-                    <i class="fas fa-broadcast-tower"></i> Live Attendance
+                <a href="<?= $basePath ?>absensi-langsung.php"
+                    class="<?= $currentPage === 'absensi-langsung.php' ? 'active' : '' ?>">
+                    <i class="fas fa-broadcast-tower"></i> Absensi Langsung
                 </a>
             </li>
 
-            <!-- HISTORY - All Roles -->
+            <!-- RIWAYAT - All Roles -->
             <li>
-                <a href="<?= $basePath ?>history.php" class="<?= $currentPage === 'history.php' ? 'active' : '' ?>">
+                <a href="<?= $basePath ?>riwayat.php" class="<?= $currentPage === 'riwayat.php' ? 'active' : '' ?>">
                     <i class="fas fa-history"></i> Riwayat Absensi
                 </a>
             </li>
@@ -256,33 +256,25 @@ $roleLabels = [
                 </a>
             </li>
 
-            <!-- DATA SISWA - Admin, Guru, Pengurus -->
-            <?php if (in_array($role, ['admin', 'guru', 'pengurus'])): ?>
+            <?php if ($role === 'admin'): ?>
+                <div class="sidebar-divider"></div>
+                <div class="sidebar-header">Menu Admin</div>
+
                 <li>
-                    <a href="<?= $basePath ?>siswa.php" class="<?= $currentPage === 'siswa.php' ? 'active' : '' ?>">
+                    <a href="<?= $basePath ?>admin/pengguna.php"
+                        class="<?= $currentPage === 'pengguna.php' ? 'active' : '' ?>">
+                        <i class="fas fa-users"></i> Manajemen Pengguna
+                    </a>
+                </li>
+                <li>
+                    <a href="<?= $basePath ?>admin/santri.php"
+                        class="<?= $currentPage === 'santri.php' && $isAdmin ? 'active' : '' ?>">
                         <i class="fas fa-user-graduate"></i> Data Santri
                     </a>
                 </li>
-            <?php endif; ?>
-
-            <?php if ($role === 'admin'): ?>
-                <div class="sidebar-divider"></div>
-                <div class="sidebar-header">Admin Menu</div>
-
                 <li>
-                    <a href="<?= $basePath ?>admin/users.php" class="<?= $currentPage === 'users.php' ? 'active' : '' ?>">
-                        <i class="fas fa-users"></i> Manajemen User
-                    </a>
-                </li>
-                <li>
-                    <a href="<?= $basePath ?>admin/siswa.php"
-                        class="<?= $currentPage === 'siswa.php' && $isAdmin ? 'active' : '' ?>">
-                        <i class="fas fa-user-graduate"></i> Data Santri (Admin)
-                    </a>
-                </li>
-                <li>
-                    <a href="<?= $basePath ?>siswa-import.php"
-                        class="<?= $currentPage === 'siswa-import.php' ? 'active' : '' ?>">
+                    <a href="<?= $basePath ?>santri-import.php"
+                        class="<?= $currentPage === 'santri-import.php' ? 'active' : '' ?>">
                         <i class="fas fa-file-import"></i> Import Santri
                     </a>
                 </li>
@@ -292,20 +284,32 @@ $roleLabels = [
                     </a>
                 </li>
                 <li>
-                    <a href="<?= $basePath ?>admin/attendances.php"
-                        class="<?= $currentPage === 'attendances.php' ? 'active' : '' ?>">
-                        <i class="fas fa-calendar-check"></i> Data Absensi
+                    <a href="<?= $basePath ?>admin/kehadiran.php"
+                        class="<?= $currentPage === 'kehadiran.php' ? 'active' : '' ?>">
+                        <i class="fas fa-calendar-check"></i> Data Kehadiran
                     </a>
                 </li>
                 <li>
-                    <a href="<?= $basePath ?>admin/manual-attendance.php"
-                        class="<?= $currentPage === 'manual-attendance.php' ? 'active' : '' ?>">
+                    <a href="<?= $basePath ?>admin/absensi-manual.php"
+                        class="<?= $currentPage === 'absensi-manual.php' ? 'active' : '' ?>">
                         <i class="fas fa-edit"></i> Absensi Manual
                     </a>
                 </li>
                 <li>
-                    <a href="<?= $basePath ?>admin/report.php" class="<?= $currentPage === 'report.php' ? 'active' : '' ?>">
+                    <a href="<?= $basePath ?>admin/laporan.php"
+                        class="<?= $currentPage === 'laporan.php' ? 'active' : '' ?>">
                         <i class="fas fa-chart-bar"></i> Laporan
+                    </a>
+                </li>
+                <li>
+                    <a href="<?= $basePath ?>admin/log-aktivitas.php"
+                        class="<?= $currentPage === 'log-aktivitas.php' ? 'active' : '' ?>">
+                        <i class="fas fa-history"></i> Log Aktivitas
+                    </a>
+                </li>
+                <li>
+                    <a href="<?= $basePath ?>admin/trash.php" class="<?= $currentPage === 'trash.php' ? 'active' : '' ?>">
+                        <i class="fas fa-trash-restore"></i> Trash
                     </a>
                 </li>
             <?php endif; ?>
@@ -315,14 +319,14 @@ $roleLabels = [
             <div class="sidebar-header"><?= $role === 'admin' ? 'Pengaturan' : 'Akun' ?></div>
 
             <li>
-                <a href="<?= $basePath ?>profile.php" class="<?= $currentPage === 'profile.php' ? 'active' : '' ?>">
-                    <i class="fas fa-user"></i> Profile
+                <a href="<?= $basePath ?>profil.php" class="<?= $currentPage === 'profil.php' ? 'active' : '' ?>">
+                    <i class="fas fa-user"></i> Profil
                 </a>
             </li>
             <?php if ($role === 'admin'): ?>
                 <li>
-                    <a href="<?= $basePath ?>admin/settings.php"
-                        class="<?= $currentPage === 'settings.php' ? 'active' : '' ?>">
+                    <a href="<?= $basePath ?>admin/pengaturan.php"
+                        class="<?= $currentPage === 'pengaturan.php' ? 'active' : '' ?>">
                         <i class="fas fa-cog"></i> Pengaturan Sistem
                     </a>
                 </li>
@@ -336,6 +340,11 @@ $roleLabels = [
     (function () {
         const sidebar = document.querySelector('.sidebar-scroll');
         if (!sidebar) return;
+
+        // Clear scroll position on fresh login
+        if (window.location.search.includes('fresh_login=1')) {
+            sessionStorage.removeItem('sidebarScroll');
+        }
 
         // Restore scroll position on page load
         const savedPos = sessionStorage.getItem('sidebarScroll');
@@ -374,18 +383,17 @@ $roleLabels = [
 
         <ul class="sidebar-menu-mobile">
             <li>
-                <a href="<?= $basePath ?>dashboard.php" class="<?= $currentPage === 'dashboard.php' ? 'active' : '' ?>">
-                    <i class="fas fa-home"></i> Dashboard
+                <a href="<?= $basePath ?>beranda.php" class="<?= $currentPage === 'beranda.php' ? 'active' : '' ?>">
+                    <i class="fas fa-home"></i> Beranda
                 </a>
             </li>
-
 
             <div class="sidebar-divider-mobile"></div>
             <div class="sidebar-header-mobile">Absensi - Scan QR</div>
 
             <li>
-                <a href="<?= $basePath ?>scanner.php" class="<?= $currentPage === 'scanner.php' ? 'active' : '' ?>">
-                    <i class="fas fa-qrcode"></i> Scanner QR Code
+                <a href="<?= $basePath ?>pemindai.php" class="<?= $currentPage === 'pemindai.php' ? 'active' : '' ?>">
+                    <i class="fas fa-qrcode"></i> Pemindai QR Code
                 </a>
             </li>
 
@@ -393,8 +401,8 @@ $roleLabels = [
             <div class="sidebar-header-mobile">Kartu RFID</div>
 
             <li>
-                <a href="<?= $basePath ?>rfid-register.php"
-                    class="<?= $currentPage === 'rfid-register.php' ? 'active' : '' ?>">
+                <a href="<?= $basePath ?>daftar-rfid.php"
+                    class="<?= $currentPage === 'daftar-rfid.php' ? 'active' : '' ?>">
                     <i class="fas fa-id-card"></i> Daftarkan Kartu
                 </a>
             </li>
@@ -403,13 +411,13 @@ $roleLabels = [
             <div class="sidebar-header-mobile">Monitoring</div>
 
             <li>
-                <a href="<?= $basePath ?>live-attendance.php"
-                    class="<?= $currentPage === 'live-attendance.php' ? 'active' : '' ?>">
-                    <i class="fas fa-broadcast-tower"></i> Live Attendance
+                <a href="<?= $basePath ?>absensi-langsung.php"
+                    class="<?= $currentPage === 'absensi-langsung.php' ? 'active' : '' ?>">
+                    <i class="fas fa-broadcast-tower"></i> Absensi Langsung
                 </a>
             </li>
             <li>
-                <a href="<?= $basePath ?>history.php" class="<?= $currentPage === 'history.php' ? 'active' : '' ?>">
+                <a href="<?= $basePath ?>riwayat.php" class="<?= $currentPage === 'riwayat.php' ? 'active' : '' ?>">
                     <i class="fas fa-history"></i> Riwayat Absensi
                 </a>
             </li>
@@ -423,32 +431,25 @@ $roleLabels = [
                     <?= $role === 'kesehatan' ? 'Laporan Kesehatan' : 'Aktivitas Santri' ?>
                 </a>
             </li>
-            <?php if (in_array($role, ['admin', 'guru', 'pengurus'])): ?>
-                <li>
-                    <a href="<?= $basePath ?>siswa.php" class="<?= $currentPage === 'siswa.php' ? 'active' : '' ?>">
-                        <i class="fas fa-user-graduate"></i> Data Santri
-                    </a>
-                </li>
-            <?php endif; ?>
 
             <?php if ($role === 'admin'): ?>
                 <div class="sidebar-divider-mobile"></div>
-                <div class="sidebar-header-mobile">Admin Menu</div>
+                <div class="sidebar-header-mobile">Menu Admin</div>
 
                 <li>
-                    <a href="<?= $basePath ?>admin/users.php" class="<?= $currentPage === 'users.php' ? 'active' : '' ?>">
-                        <i class="fas fa-users-cog"></i> Manajemen User
+                    <a href="<?= $basePath ?>admin/pengguna.php"
+                        class="<?= $currentPage === 'pengguna.php' ? 'active' : '' ?>">
+                        <i class="fas fa-users-cog"></i> Manajemen Pengguna
                     </a>
                 </li>
                 <li>
-                    <a href="<?= $basePath ?>admin/siswa.php"
-                        class="<?= $currentPage === 'admin/siswa.php' ? 'active' : '' ?>">
-                        <i class="fas fa-user-graduate"></i> Data Santri (Admin)
+                    <a href="<?= $basePath ?>admin/santri.php" class="<?= $currentPage === 'santri.php' ? 'active' : '' ?>">
+                        <i class="fas fa-user-graduate"></i> Data Santri
                     </a>
                 </li>
                 <li>
-                    <a href="<?= $basePath ?>siswa-import.php"
-                        class="<?= $currentPage === 'siswa-import.php' ? 'active' : '' ?>">
+                    <a href="<?= $basePath ?>santri-import.php"
+                        class="<?= $currentPage === 'santri-import.php' ? 'active' : '' ?>">
                         <i class="fas fa-file-import"></i> Import Santri
                     </a>
                 </li>
@@ -458,20 +459,32 @@ $roleLabels = [
                     </a>
                 </li>
                 <li>
-                    <a href="<?= $basePath ?>admin/attendances.php"
-                        class="<?= $currentPage === 'attendances.php' ? 'active' : '' ?>">
-                        <i class="fas fa-calendar-check"></i> Data Absensi
+                    <a href="<?= $basePath ?>admin/kehadiran.php"
+                        class="<?= $currentPage === 'kehadiran.php' ? 'active' : '' ?>">
+                        <i class="fas fa-calendar-check"></i> Data Kehadiran
                     </a>
                 </li>
                 <li>
-                    <a href="<?= $basePath ?>admin/manual-attendance.php"
-                        class="<?= $currentPage === 'manual-attendance.php' ? 'active' : '' ?>">
+                    <a href="<?= $basePath ?>admin/absensi-manual.php"
+                        class="<?= $currentPage === 'absensi-manual.php' ? 'active' : '' ?>">
                         <i class="fas fa-edit"></i> Absensi Manual
                     </a>
                 </li>
                 <li>
-                    <a href="<?= $basePath ?>admin/report.php" class="<?= $currentPage === 'report.php' ? 'active' : '' ?>">
+                    <a href="<?= $basePath ?>admin/laporan.php"
+                        class="<?= $currentPage === 'laporan.php' ? 'active' : '' ?>">
                         <i class="fas fa-chart-bar"></i> Laporan
+                    </a>
+                </li>
+                <li>
+                    <a href="<?= $basePath ?>admin/log-aktivitas.php"
+                        class="<?= $currentPage === 'log-aktivitas.php' ? 'active' : '' ?>">
+                        <i class="fas fa-history"></i> Log Aktivitas
+                    </a>
+                </li>
+                <li>
+                    <a href="<?= $basePath ?>admin/trash.php" class="<?= $currentPage === 'trash.php' ? 'active' : '' ?>">
+                        <i class="fas fa-trash-restore"></i> Trash
                     </a>
                 </li>
             <?php endif; ?>
@@ -481,14 +494,14 @@ $roleLabels = [
             <div class="sidebar-header-mobile"><?= $role === 'admin' ? 'Pengaturan' : 'Akun' ?></div>
 
             <li>
-                <a href="<?= $basePath ?>profile.php" class="<?= $currentPage === 'profile.php' ? 'active' : '' ?>">
-                    <i class="fas fa-user"></i> Profile
+                <a href="<?= $basePath ?>profil.php" class="<?= $currentPage === 'profil.php' ? 'active' : '' ?>">
+                    <i class="fas fa-user"></i> Profil
                 </a>
             </li>
             <?php if ($role === 'admin'): ?>
                 <li>
-                    <a href="<?= $basePath ?>admin/settings.php"
-                        class="<?= $currentPage === 'settings.php' ? 'active' : '' ?>">
+                    <a href="<?= $basePath ?>admin/pengaturan.php"
+                        class="<?= $currentPage === 'pengaturan.php' ? 'active' : '' ?>">
                         <i class="fas fa-cog"></i> Pengaturan Sistem
                     </a>
                 </li>

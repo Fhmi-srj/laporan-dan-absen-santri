@@ -4,6 +4,8 @@
  * Include this at the top of each page after PHP logic
  */
 $currentPage = basename($_SERVER['PHP_SELF']);
+$isAdminPage = strpos($_SERVER['REQUEST_URI'], '/admin/') !== false;
+$basePath = $isAdminPage ? '../' : '';
 $user = getCurrentUser();
 $role = $user['role'] ?? '';
 ?>
@@ -17,8 +19,7 @@ $role = $user['role'] ?? '';
         <?= $pageTitle ?? 'Dashboard' ?> -
         <?= APP_NAME ?>
     </title>
-    <link rel="icon" type="image/png"
-        href="<?= strpos($currentPage, 'admin/') !== false ? '../logo-pondok.png' : 'logo-pondok.png' ?>">
+    <link rel="icon" type="image/png" href="<?= $basePath ?>logo-pondok.png">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
@@ -111,7 +112,7 @@ $role = $user['role'] ?? '';
             padding-top: 90px;
         }
 
-        /* Mobile Responsive */
+        /* Mobile Responsive - Tablet */
         @media (max-width: 991px) {
             .main-content {
                 margin-left: 0;
@@ -171,27 +172,341 @@ $role = $user['role'] ?? '';
                 font-size: 16px !important;
                 /* Prevents zoom on iOS */
             }
+
+            /* Card padding */
+            .card-custom.p-4 {
+                padding: 1rem !important;
+            }
+
+            /* Page titles */
+            h4.fw-bold,
+            .fw-bold.mb-4 {
+                font-size: 1.25rem;
+            }
+
+            /* Row gaps */
+            .row.g-4 {
+                --bs-gutter-x: 1rem;
+                --bs-gutter-y: 1rem;
+            }
         }
 
-        @media (max-width: 576px) {
+        /* Mobile Responsive - Phone */
+        @media (max-width: 767px) {
             .main-content {
                 padding: 0.75rem;
                 padding-top: 75px;
             }
 
             h4,
-            .h4 {
+            .h4,
+            h4.fw-bold {
                 font-size: 1.1rem;
+                margin-bottom: 0.75rem !important;
+            }
+
+            h5,
+            .h5 {
+                font-size: 1rem;
+            }
+
+            h6,
+            .h6 {
+                font-size: 0.9rem;
+            }
+
+            /* Cards */
+            .card-custom {
+                border-radius: 10px;
+            }
+
+            .card-custom.p-4,
+            .card-custom.p-3 {
+                padding: 0.875rem !important;
+            }
+
+            /* Stat cards */
+            .stat-card {
+                padding: 0.875rem;
+            }
+
+            .stat-value {
+                font-size: 1.35rem;
+            }
+
+            .stat-label {
+                font-size: 0.75rem;
+            }
+
+            .stat-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 0.9rem;
+                border-radius: 8px;
+            }
+
+            /* Tables */
+            .table {
+                font-size: 0.8rem;
+            }
+
+            .table th,
+            .table td {
+                padding: 0.5rem 0.4rem;
+            }
+
+            .table-responsive {
+                font-size: 0.8rem;
+            }
+
+            /* Buttons */
+            .btn {
+                font-size: 0.85rem;
+                padding: 0.4rem 0.75rem;
+            }
+
+            .btn-sm {
+                font-size: 0.7rem;
+                padding: 0.2rem 0.4rem;
+            }
+
+            .btn-lg {
+                font-size: 0.95rem;
+                padding: 0.5rem 1rem;
+            }
+
+            /* Forms */
+            .form-label {
+                font-size: 0.85rem;
+                margin-bottom: 0.3rem;
+            }
+
+            .form-control,
+            .form-select {
+                font-size: 0.9rem;
+                padding: 0.5rem 0.75rem;
+            }
+
+            .form-control-lg,
+            .form-select-lg {
+                font-size: 0.95rem;
+                padding: 0.5rem 0.75rem;
+            }
+
+            /* Alerts */
+            .alert {
+                font-size: 0.85rem;
+                padding: 0.75rem;
+            }
+
+            /* Badges */
+            .badge {
+                font-size: 0.7rem;
+                padding: 0.25rem 0.5rem;
+            }
+
+            /* Modals */
+            .modal-dialog {
+                margin: 0.5rem;
+                max-width: calc(100% - 1rem);
+            }
+
+            .modal-header {
+                padding: 0.875rem 1rem;
+            }
+
+            .modal-title {
+                font-size: 1rem;
+            }
+
+            .modal-body {
+                padding: 1rem !important;
+            }
+
+            .modal-footer {
+                padding: 0.75rem 1rem;
+            }
+
+            /* Pagination */
+            .pagination {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .page-link {
+                padding: 0.35rem 0.6rem;
+                font-size: 0.8rem;
+            }
+
+            /* Row adjustments */
+            .row.g-4 {
+                --bs-gutter-x: 0.75rem;
+                --bs-gutter-y: 0.75rem;
+            }
+
+            .row.g-3 {
+                --bs-gutter-x: 0.5rem;
+                --bs-gutter-y: 0.5rem;
+            }
+
+            /* Flex utilities */
+            .d-flex.gap-2 {
+                gap: 0.4rem !important;
+            }
+
+            .d-flex.gap-3 {
+                gap: 0.5rem !important;
+            }
+
+            /* Filter sections */
+            .filter-section .form-control,
+            .filter-section .form-select {
+                font-size: 0.85rem;
+            }
+        }
+
+        /* Mobile Responsive - Small Phone */
+        @media (max-width: 575px) {
+            .main-content {
+                padding: 0.5rem;
+                padding-top: 70px;
+            }
+
+            h4,
+            .h4,
+            h4.fw-bold {
+                font-size: 1rem;
             }
 
             .d-flex.justify-content-between {
                 flex-direction: column !important;
-                gap: 0.75rem !important;
+                gap: 0.5rem !important;
+                align-items: stretch !important;
+            }
+
+            .d-flex.justify-content-between .btn {
+                width: 100%;
             }
 
             /* Hide text on buttons, show only icons */
             .btn-action-text {
                 display: none;
+            }
+
+            /* Cards */
+            .card-custom {
+                border-radius: 8px;
+            }
+
+            .card-custom.p-4,
+            .card-custom.p-3 {
+                padding: 0.75rem !important;
+            }
+
+            /* Stat cards in grid */
+            .col-6 .stat-card,
+            .col-sm-6 .stat-card {
+                padding: 0.75rem;
+            }
+
+            .stat-value {
+                font-size: 1.2rem;
+            }
+
+            .stat-label {
+                font-size: 0.7rem;
+            }
+
+            .stat-icon {
+                width: 32px;
+                height: 32px;
+                font-size: 0.8rem;
+            }
+
+            /* Tables */
+            .table {
+                font-size: 0.75rem;
+            }
+
+            .table th,
+            .table td {
+                padding: 0.4rem 0.3rem;
+            }
+
+            /* Buttons */
+            .btn {
+                font-size: 0.8rem;
+                padding: 0.35rem 0.6rem;
+            }
+
+            .btn-sm {
+                font-size: 0.65rem;
+                padding: 0.15rem 0.35rem;
+            }
+
+            /* Forms */
+            .form-label {
+                font-size: 0.8rem;
+            }
+
+            .form-control,
+            .form-select {
+                font-size: 0.85rem;
+                padding: 0.4rem 0.6rem;
+            }
+
+            .mb-3 {
+                margin-bottom: 0.75rem !important;
+            }
+
+            .mb-4 {
+                margin-bottom: 1rem !important;
+            }
+
+            /* Alerts */
+            .alert {
+                font-size: 0.8rem;
+                padding: 0.6rem;
+            }
+
+            .alert ul {
+                padding-left: 1.25rem;
+                margin-bottom: 0;
+            }
+
+            /* Modals */
+            .modal-dialog {
+                margin: 0.25rem;
+                max-width: calc(100% - 0.5rem);
+            }
+
+            .modal-header {
+                padding: 0.75rem;
+            }
+
+            .modal-title {
+                font-size: 0.95rem;
+            }
+
+            .modal-body {
+                padding: 0.75rem !important;
+            }
+
+            /* Hide some columns on very small screens */
+            .table .hide-xs {
+                display: none !important;
+            }
+
+            /* Pagination */
+            .page-link {
+                padding: 0.3rem 0.5rem;
+                font-size: 0.75rem;
+            }
+
+            /* Row adjustments */
+            .row.g-4 {
+                --bs-gutter-x: 0.5rem;
+                --bs-gutter-y: 0.5rem;
             }
         }
 
@@ -270,10 +585,9 @@ $role = $user['role'] ?? '';
                     data-bs-target="#sidebarMobile">
                     <i class="fas fa-bars"></i>
                 </button>
-                <a class="navbar-brand"
-                    href="<?= strpos($currentPage, 'admin/') !== false ? '../dashboard.php' : 'dashboard.php' ?>">
-                    <img src="<?= strpos($currentPage, 'admin/') !== false ? '../logo-pondok.png' : 'logo-pondok.png' ?>"
-                        alt="Logo" style="height: 28px; width: auto; margin-right: 8px;">
+                <a class="navbar-brand" href="<?= $basePath ?>beranda.php">
+                    <img src="<?= $basePath ?>logo-pondok.png" alt="Logo"
+                        style="height: 28px; width: auto; margin-right: 8px;">
                     <?= APP_NAME ?>
                 </a>
             </div>

@@ -17,7 +17,7 @@ if (!isLoggedIn()) {
 $pdo = getDB();
 $id = $_GET['id'] ?? 0;
 
-$stmt = $pdo->prepare("SELECT * FROM catatan_aktivitas WHERE id = ?");
+$stmt = $pdo->prepare("SELECT * FROM catatan_aktivitas WHERE id = ? AND deleted_at IS NULL");
 $stmt->execute([$id]);
 $catatan = $stmt->fetch();
 

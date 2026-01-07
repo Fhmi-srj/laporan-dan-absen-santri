@@ -4,30 +4,23 @@
  * Laporan Santri - PHP Murni
  */
 
-// Konfigurasi Error Reporting (Matikan di Production)
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+// Konfigurasi Error Reporting (Production Mode)
+error_reporting(0);
+ini_set('display_errors', 0);
 
 // Timezone
 date_default_timezone_set('Asia/Jakarta');
 
 // Konfigurasi Database Utama
-define('DB_HOST', '127.0.0.1');
+define('DB_HOST', 'localhost');
 define('DB_PORT', '3306');
-define('DB_NAME', 'diantar2_absen');
+define('DB_NAME', 'diantar2_aktivitas');
 define('DB_USER', 'root');
-define('DB_PASS', '');
-
-// Konfigurasi Database SPMB
-define('SPMB_DB_HOST', '127.0.0.1');
-define('SPMB_DB_PORT', '3306');
-define('SPMB_DB_NAME', 'spmb_db');
-define('SPMB_DB_USER', 'root');
-define('SPMB_DB_PASS', '');
+define('DB_PASS', '');  // <-- GANTI DENGAN PASSWORD DATABASE
 
 // Konfigurasi Aplikasi
 define('APP_NAME', 'MAMBAUL-HUDA');
-define('APP_URL', 'http://localhost/Laporan Santri/Laporan Santri');
+define('APP_URL', 'http://localhost/santri-copy');
 define('KIOSK_PASSWORD', '1234'); // Password untuk ganti jadwal di kiosk
 define('BASE_PATH', __DIR__);
 
@@ -54,25 +47,6 @@ function getDB()
             ]);
         } catch (PDOException $e) {
             die("Koneksi database gagal: " . $e->getMessage());
-        }
-    }
-    return $pdo;
-}
-
-// Koneksi Database SPMB
-function getSPMBDB()
-{
-    static $pdo = null;
-    if ($pdo === null) {
-        try {
-            $dsn = "mysql:host=" . SPMB_DB_HOST . ";port=" . SPMB_DB_PORT . ";dbname=" . SPMB_DB_NAME . ";charset=utf8mb4";
-            $pdo = new PDO($dsn, SPMB_DB_USER, SPMB_DB_PASS, [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES => false,
-            ]);
-        } catch (PDOException $e) {
-            die("Koneksi database SPMB gagal: " . $e->getMessage());
         }
     }
     return $pdo;
@@ -117,7 +91,7 @@ function getCurrentUser()
 function requireLogin()
 {
     if (!isLoggedIn()) {
-        header('Location: login.php');
+        header('Location: masuk.php');
         exit;
     }
 }

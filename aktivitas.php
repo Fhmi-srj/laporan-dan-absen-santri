@@ -200,8 +200,9 @@ $extraStyles = <<<'CSS'
     
     .modal-content { border: none; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
     .modal-header { border-bottom: 1px solid #f1f5f9; padding: 1.5rem; }
-    .modal-body { padding: 1.5rem; }
+    .modal-body { padding: 1.5rem; max-height: 60vh; overflow-y: auto; }
     .modal-footer { border-top: 1px solid #f1f5f9; padding: 1.25rem 1.5rem; }
+    .modal-dialog-scrollable .modal-body { max-height: calc(100vh - 200px); }
     
     .form-label-custom {
         font-size: 0.75rem;
@@ -219,6 +220,101 @@ $extraStyles = <<<'CSS'
         font-size: 0.9rem;
     }
     .form-control-custom:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(134, 89, 241, 0.1); outline: none; }
+    
+    /* Photo Upload Component */
+    .photo-upload-wrapper {
+        border: 2px dashed #e2e8f0;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        background: #f8fafc;
+        transition: all 0.3s;
+    }
+    .photo-upload-wrapper:hover {
+        border-color: var(--primary-color);
+        background: #f1f5f9;
+    }
+    .photo-upload-wrapper.has-preview {
+        border-style: solid;
+        border-color: #10b981;
+        background: #ecfdf5;
+    }
+    .photo-upload-buttons {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .btn-photo-upload {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+    }
+    .btn-camera {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+    }
+    .btn-camera:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+    .btn-file {
+        background: white;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+    }
+    .btn-file:hover {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+    }
+    .photo-preview-container {
+        position: relative;
+        display: inline-block;
+        margin-top: 15px;
+    }
+    .photo-preview-container img {
+        max-width: 100%;
+        max-height: 180px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    .btn-remove-photo {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #ef4444;
+        color: white;
+        border: 2px solid white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .btn-remove-photo:hover {
+        background: #dc2626;
+        transform: scale(1.1);
+    }
+    @media (max-width: 768px) {
+        .photo-upload-buttons {
+            flex-direction: column;
+        }
+        .btn-photo-upload {
+            width: 100%;
+            justify-content: center;
+        }
+    }
     
     .foto-preview { max-width: 100%; max-height: 150px; border-radius: 8px; margin-top: 10px; border: 1px solid #e2e8f0; }
     
@@ -510,17 +606,59 @@ CSS;
                                 <div class="col-md-6" id="col_foto_1">
                                     <label class="form-label-custom" id="lbl_foto_1">FOTO BUKTI <span
                                             class="text-muted fw-normal">(Opsional)</span></label>
-                                    <input type="file" name="foto_dokumen_1" id="input_foto_1"
-                                        class="form-control-custom w-100" accept="image/*"
-                                        onchange="previewFoto(this, 'preview_foto_1')">
-                                    <img id="preview_foto_1" class="foto-preview d-none">
+                                    <div class="photo-upload-wrapper" id="wrapper_foto_1">
+                                        <input type="file" name="foto_dokumen_1" id="input_foto_1"
+                                            class="d-none" accept="image/*"
+                                            onchange="handlePhotoSelect(this, 'preview_foto_1', 'wrapper_foto_1')">
+                                        <input type="file" id="camera_foto_1" class="d-none" 
+                                            accept="image/*" capture="environment"
+                                            onchange="handlePhotoSelect(this, 'preview_foto_1', 'wrapper_foto_1', 'input_foto_1')">
+                                        <div class="photo-upload-buttons" id="buttons_foto_1">
+                                            <button type="button" class="btn-photo-upload btn-camera" 
+                                                onclick="document.getElementById('camera_foto_1').click()">
+                                                <i class="fas fa-camera"></i> Ambil Foto
+                                            </button>
+                                            <button type="button" class="btn-photo-upload btn-file"
+                                                onclick="document.getElementById('input_foto_1').click()">
+                                                <i class="fas fa-folder-open"></i> Pilih File
+                                            </button>
+                                        </div>
+                                        <div class="photo-preview-container d-none" id="container_foto_1">
+                                            <img id="preview_foto_1" alt="Preview">
+                                            <button type="button" class="btn-remove-photo" 
+                                                onclick="removePhoto('input_foto_1', 'preview_foto_1', 'wrapper_foto_1', 'container_foto_1', 'buttons_foto_1')">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="col-md-6 d-none" id="col_foto_2">
                                     <label class="form-label-custom" id="lbl_foto_2">FOTO PENERIMA</label>
-                                    <input type="file" name="foto_dokumen_2" id="input_foto_2"
-                                        class="form-control-custom w-100" accept="image/*"
-                                        onchange="previewFoto(this, 'preview_foto_2')">
-                                    <img id="preview_foto_2" class="foto-preview d-none">
+                                    <div class="photo-upload-wrapper" id="wrapper_foto_2">
+                                        <input type="file" name="foto_dokumen_2" id="input_foto_2"
+                                            class="d-none" accept="image/*"
+                                            onchange="handlePhotoSelect(this, 'preview_foto_2', 'wrapper_foto_2')">
+                                        <input type="file" id="camera_foto_2" class="d-none" 
+                                            accept="image/*" capture="environment"
+                                            onchange="handlePhotoSelect(this, 'preview_foto_2', 'wrapper_foto_2', 'input_foto_2')">
+                                        <div class="photo-upload-buttons" id="buttons_foto_2">
+                                            <button type="button" class="btn-photo-upload btn-camera" 
+                                                onclick="document.getElementById('camera_foto_2').click()">
+                                                <i class="fas fa-camera"></i> Ambil Foto
+                                            </button>
+                                            <button type="button" class="btn-photo-upload btn-file"
+                                                onclick="document.getElementById('input_foto_2').click()">
+                                                <i class="fas fa-folder-open"></i> Pilih File
+                                            </button>
+                                        </div>
+                                        <div class="photo-preview-container d-none" id="container_foto_2">
+                                            <img id="preview_foto_2" alt="Preview">
+                                            <button type="button" class="btn-remove-photo" 
+                                                onclick="removePhoto('input_foto_2', 'preview_foto_2', 'wrapper_foto_2', 'container_foto_2', 'buttons_foto_2')">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

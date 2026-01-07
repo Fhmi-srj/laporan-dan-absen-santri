@@ -15,7 +15,7 @@
         }).then((result) => {
             if (result.isConfirmed) {
                 const isAdmin = window.location.pathname.includes('/admin/');
-                window.location.href = isAdmin ? '../logout.php' : 'logout.php';
+                window.location.href = isAdmin ? '../keluar.php' : 'keluar.php';
             }
         });
     }

@@ -7,73 +7,64 @@
 require_once __DIR__ . '/config.php';
 
 /**
- * Get pendaftaran data from SPMB for list of pendaftaran_ids
- * Returns associative array: pendaftaran_id => pendaftaran_data
- */
-function getPendaftaranData($pendaftaranIds)
-{
-    if (empty($pendaftaranIds))
-        return [];
-
-    $spmb = getSPMBDB();
-    $placeholders = str_repeat('?,', count($pendaftaranIds) - 1) . '?';
-    $stmt = $spmb->prepare("SELECT * FROM pendaftaran WHERE id IN ($placeholders)");
-    $stmt->execute($pendaftaranIds);
-
-    $result = [];
-    while ($row = $stmt->fetch()) {
-        $result[$row['id']] = $row;
-    }
-    return $result;
-}
-
-/**
- * Enrich siswa data with pendaftaran data from SPMB
- * Adds nama_lengkap, alamat, no_wa, no_wa_wali, etc. to each siswa
- */
-function enrichSiswaWithSPMB(&$siswaList)
-{
-    if (empty($siswaList))
-        return;
-
-    $pendaftaranIds = array_column($siswaList, 'pendaftaran_id');
-    $pendaftaranData = getPendaftaranData($pendaftaranIds);
-
-    foreach ($siswaList as &$s) {
-        $p = $pendaftaranData[$s['pendaftaran_id']] ?? [];
-        $s['nama_lengkap'] = $p['nama'] ?? '-';
-        $s['no_wa'] = $p['no_hp_wali'] ?? '-';
-        $s['no_wa_wali'] = $p['no_hp_wali'] ?? '-';
-        $s['alamat'] = isset($p['alamat']) ? trim($p['alamat'] . ', ' . ($p['kelurahan_desa'] ?? '') . ', ' . ($p['kecamatan'] ?? '') . ', ' . ($p['kota_kab'] ?? ''), ', ') : '-';
-        $s['jenis_kelamin'] = $p['jenis_kelamin'] ?? '-';
-        $s['lembaga'] = $p['lembaga'] ?? '-';
-        $s['nik'] = $p['nik'] ?? '-';
-        $s['nisn'] = $p['nisn'] ?? '-';
-        $s['tempat_lahir'] = $p['tempat_lahir'] ?? '-';
-        $s['tanggal_lahir'] = $p['tanggal_lahir'] ?? '-';
-        $s['nama_ayah'] = $p['nama_ayah'] ?? '-';
-        $s['nama_ibu'] = $p['nama_ibu'] ?? '-';
-        $s['status_spmb'] = $p['status'] ?? '-';
-    }
-    unset($s);
-}
-
-/**
- * Get single siswa with SPMB data by siswa ID
+ * Get single santri by ID from data_induk table
  */
 function getSiswaById($siswaId)
 {
     $pdo = getDB();
-    $stmt = $pdo->prepare("SELECT * FROM siswa WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT * FROM data_induk WHERE id = ?");
     $stmt->execute([$siswaId]);
-    $siswa = $stmt->fetch();
+    return $stmt->fetch();
+}
 
-    if ($siswa) {
-        $siswaList = [$siswa];
-        enrichSiswaWithSPMB($siswaList);
-        return $siswaList[0];
+/**
+ * Get all santri with optional filters
+ */
+function getAllSiswa($filters = [])
+{
+    $pdo = getDB();
+    $sql = "SELECT * FROM data_induk WHERE 1=1";
+    $params = [];
+
+    if (!empty($filters['kelas'])) {
+        $sql .= " AND kelas = ?";
+        $params[] = $filters['kelas'];
     }
-    return null;
+    if (!empty($filters['status'])) {
+        $sql .= " AND status = ?";
+        $params[] = $filters['status'];
+    }
+    if (!empty($filters['search'])) {
+        $sql .= " AND (nama_lengkap LIKE ? OR nisn LIKE ? OR nik LIKE ?)";
+        $search = '%' . $filters['search'] . '%';
+        $params[] = $search;
+        $params[] = $search;
+        $params[] = $search;
+    }
+
+    $sql .= " ORDER BY nama_lengkap ASC";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->fetchAll();
+}
+
+/**
+ * Search santri by keyword (nama, nisn, nik)
+ */
+function searchSiswa($keyword, $limit = 10)
+{
+    $pdo = getDB();
+    $stmt = $pdo->prepare("
+        SELECT id, nama_lengkap, nisn, kelas, alamat, no_wa_wali, kabupaten, kecamatan
+        FROM data_induk 
+        WHERE nama_lengkap LIKE ? OR nisn LIKE ? OR nik LIKE ?
+        ORDER BY nama_lengkap ASC
+        LIMIT ?
+    ");
+    $search = '%' . $keyword . '%';
+    $stmt->execute([$search, $search, $search, $limit]);
+    return $stmt->fetchAll();
 }
 
 
@@ -438,4 +429,163 @@ function getKategoriInfo($kategori)
         'hafalan' => ['label' => 'Hafalan', 'color' => '#3b82f6', 'bg' => '#dbeafe', 'icon' => 'fas fa-quran'],
     ];
     return $map[$kategori] ?? ['label' => $kategori, 'color' => '#64748b', 'bg' => '#f1f5f9', 'icon' => 'fas fa-info'];
+}
+
+/**
+ * Get device name from User-Agent
+ */
+function getDeviceName()
+{
+    $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+
+    // Mobile devices
+    if (preg_match('/iPhone/', $userAgent))
+        return 'iPhone';
+    if (preg_match('/iPad/', $userAgent))
+        return 'iPad';
+    if (preg_match('/SM-[A-Z0-9]+/i', $userAgent, $m))
+        return 'Samsung ' . $m[0];
+    if (preg_match('/SAMSUNG|Galaxy/i', $userAgent))
+        return 'Samsung Galaxy';
+    if (preg_match('/Pixel/', $userAgent))
+        return 'Google Pixel';
+    if (preg_match('/OPPO|CPH/i', $userAgent))
+        return 'OPPO';
+    if (preg_match('/vivo/i', $userAgent))
+        return 'Vivo';
+    if (preg_match('/Xiaomi|Redmi|POCO/i', $userAgent))
+        return 'Xiaomi';
+    if (preg_match('/Huawei/i', $userAgent))
+        return 'Huawei';
+    if (preg_match('/realme/i', $userAgent))
+        return 'Realme';
+    if (preg_match('/Android/', $userAgent))
+        return 'Android Device';
+
+    // Desktop/Laptop
+    if (preg_match('/Macintosh/', $userAgent))
+        return 'MacBook/iMac';
+    if (preg_match('/Windows NT 10/', $userAgent))
+        return 'Windows PC';
+    if (preg_match('/Windows NT/', $userAgent))
+        return 'Windows PC';
+    if (preg_match('/Linux/', $userAgent))
+        return 'Linux PC';
+    if (preg_match('/CrOS/', $userAgent))
+        return 'Chromebook';
+
+    return 'Unknown Device';
+}
+
+/**
+ * Log user activity to database
+ */
+function logActivity($action, $tableName = null, $recordId = null, $recordName = null, $oldData = null, $newData = null, $description = null)
+{
+    try {
+        $pdo = getDB();
+        $user = getCurrentUser();
+
+        $stmt = $pdo->prepare("
+            INSERT INTO activity_logs 
+            (user_id, user_name, device_name, ip_address, action, table_name, record_id, record_name, old_data, new_data, description)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+
+        $stmt->execute([
+            $user['id'] ?? 0,
+            $user['name'] ?? 'System',
+            getDeviceName(),
+            $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0',
+            $action,
+            $tableName,
+            $recordId,
+            $recordName,
+            $oldData ? json_encode($oldData, JSON_UNESCAPED_UNICODE) : null,
+            $newData ? json_encode($newData, JSON_UNESCAPED_UNICODE) : null,
+            $description
+        ]);
+
+        return true;
+    } catch (Exception $e) {
+        // Silent fail - don't break the app if logging fails
+        error_log("Activity log error: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Get system setting value
+ */
+function getSetting($key, $default = null)
+{
+    try {
+        $pdo = getDB();
+        $stmt = $pdo->prepare("SELECT setting_value FROM system_settings WHERE setting_key = ?");
+        $stmt->execute([$key]);
+        $result = $stmt->fetchColumn();
+        return $result !== false ? $result : $default;
+    } catch (Exception $e) {
+        return $default;
+    }
+}
+
+/**
+ * Update system setting value
+ */
+function setSetting($key, $value)
+{
+    try {
+        $pdo = getDB();
+        $stmt = $pdo->prepare("
+            INSERT INTO system_settings (setting_key, setting_value) VALUES (?, ?)
+            ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)
+        ");
+        return $stmt->execute([$key, $value]);
+    } catch (Exception $e) {
+        return false;
+    }
+}
+
+/**
+ * Soft delete a record
+ */
+function softDelete($table, $id)
+{
+    try {
+        $pdo = getDB();
+        $user = getCurrentUser();
+        $stmt = $pdo->prepare("UPDATE $table SET deleted_at = NOW(), deleted_by = ? WHERE id = ?");
+        return $stmt->execute([$user['id'] ?? null, $id]);
+    } catch (Exception $e) {
+        return false;
+    }
+}
+
+/**
+ * Restore a soft-deleted record
+ */
+function restoreRecord($table, $id)
+{
+    try {
+        $pdo = getDB();
+        $stmt = $pdo->prepare("UPDATE $table SET deleted_at = NULL, deleted_by = NULL WHERE id = ?");
+        return $stmt->execute([$id]);
+    } catch (Exception $e) {
+        return false;
+    }
+}
+
+/**
+ * Permanently delete a record
+ */
+function permanentDelete($table, $id)
+{
+    try {
+        $pdo = getDB();
+        $stmt = $pdo->prepare("DELETE FROM $table WHERE id = ?");
+        return $stmt->execute([$id]);
+    } catch (Exception $e) {
+        return false;
+    }
 }

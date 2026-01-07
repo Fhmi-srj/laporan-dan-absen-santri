@@ -93,6 +93,30 @@ try {
         $id
     ]);
 
+    // Get santri name for logging
+    $santriStmt = $pdo->prepare("SELECT di.nama_lengkap FROM catatan_aktivitas ca JOIN data_induk di ON ca.siswa_id = di.id WHERE ca.id = ?");
+    $santriStmt->execute([$id]);
+    $santriName = $santriStmt->fetchColumn();
+
+    // Log activity with complete old and new data
+    logActivity('UPDATE', 'catatan_aktivitas', $id, $santriName, [
+        'nama' => $santriName,
+        'kategori' => $existing['kategori'],
+        'judul' => $existing['judul'],
+        'tanggal_mulai' => $existing['tanggal'],
+        'tanggal_selesai' => $existing['tanggal_selesai'],
+        'keterangan' => $existing['keterangan'],
+        'status' => $existing['status_kegiatan']
+    ], [
+        'nama' => $santriName,
+        'kategori' => $kategori,
+        'judul' => $_POST['judul'] ?? null,
+        'tanggal_mulai' => $_POST['tanggal'] ?? null,
+        'tanggal_selesai' => $_POST['tanggal_selesai'] ?? null,
+        'keterangan' => $_POST['keterangan'] ?? null,
+        'status' => $statusKegiatan
+    ], "Ubah aktivitas $kategori untuk $santriName");
+
     echo json_encode(['status' => 'success', 'message' => 'Data aktivitas berhasil diperbarui!']);
 } catch (Exception $e) {
     http_response_code(500);

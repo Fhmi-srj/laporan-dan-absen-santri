@@ -40,36 +40,27 @@ try {
                 exit;
             }
 
-            // Search directly from SPMB pendaftaran
-            $spmb = getSPMBDB();
-            $stmt = $spmb->prepare("SELECT * FROM pendaftaran WHERE nama LIKE ? OR no_hp_wali LIKE ? ORDER BY nama ASC LIMIT 10");
-            $stmt->execute(["%$keyword%", "%$keyword%"]);
-            $pendaftaranList = $stmt->fetchAll();
+            // Search directly from data_induk
+            $stmt = $pdo->prepare("
+                SELECT id, nama_lengkap, nisn as nomor_induk, kelas, lembaga_sekolah as lembaga, no_wa_wali,
+                       CONCAT(COALESCE(alamat,''), ', ', COALESCE(kecamatan,''), ', ', COALESCE(kabupaten,'')) as alamat
+                FROM data_induk 
+                WHERE deleted_at IS NULL AND (nama_lengkap LIKE ? OR no_wa_wali LIKE ? OR nisn LIKE ?)
+                ORDER BY nama_lengkap ASC LIMIT 10
+            ");
+            $stmt->execute(["%$keyword%", "%$keyword%", "%$keyword%"]);
+            $siswaList = $stmt->fetchAll();
 
-            // Get siswa data (NIS, kelas, RFID) from local table
-            $pendaftaranIds = array_column($pendaftaranList, 'id');
-            $siswaData = [];
-            if (!empty($pendaftaranIds)) {
-                $placeholders = str_repeat('?,', count($pendaftaranIds) - 1) . '?';
-                $siswaStmt = $pdo->prepare("SELECT * FROM siswa WHERE pendaftaran_id IN ($placeholders)");
-                $siswaStmt->execute($pendaftaranIds);
-                while ($row = $siswaStmt->fetch()) {
-                    $siswaData[$row['pendaftaran_id']] = $row;
-                }
-            }
-
-            // Merge data
+            // Format result
             $siswa = [];
-            foreach ($pendaftaranList as $p) {
-                $s = $siswaData[$p['id']] ?? [];
+            foreach ($siswaList as $s) {
                 $siswa[] = [
-                    'id' => $s['id'] ?? null,
-                    'pendaftaran_id' => $p['id'],
-                    'nama_lengkap' => $p['nama'] ?? '-',
+                    'id' => $s['id'],
+                    'nama_lengkap' => $s['nama_lengkap'] ?? '-',
                     'nomor_induk' => $s['nomor_induk'] ?? null,
                     'kelas' => $s['kelas'] ?? null,
-                    'lembaga' => $p['lembaga'] ?? '-',
-                    'no_wa_wali' => $p['no_hp_wali'] ?? '-',
+                    'lembaga' => $s['lembaga'] ?? '-',
+                    'no_wa_wali' => $s['no_wa_wali'] ?? '-',
                 ];
             }
 
@@ -93,7 +84,7 @@ try {
             $draw = (int) ($_GET['draw'] ?? 1);
 
             // Build query
-            $where = [];
+            $where = ['ca.deleted_at IS NULL'];  // Only show non-deleted records
             $params = [];
 
             if ($kategori && $kategori !== 'all') {
@@ -153,17 +144,17 @@ try {
             $orderClause = "ORDER BY $orderColumn $orderDir";
 
             // Count total
-            $countSql = "SELECT COUNT(*) FROM catatan_aktivitas ca JOIN siswa s ON ca.siswa_id = s.id $whereClause";
+            $countSql = "SELECT COUNT(*) FROM catatan_aktivitas ca JOIN data_induk di ON ca.siswa_id = di.id $whereClause";
             $countStmt = $pdo->prepare($countSql);
             $countStmt->execute($params);
             $totalRecords = $countStmt->fetchColumn();
 
-            // Get data
+            // Get data - JOIN with data_induk
             $sql = "
-                SELECT ca.*, s.nomor_induk, s.kelas, s.pendaftaran_id,
+                SELECT ca.*, di.nama_lengkap, di.nisn as nomor_induk, di.kelas, di.no_wa_wali,
                        u.name as pembuat_nama
                 FROM catatan_aktivitas ca
-                JOIN siswa s ON ca.siswa_id = s.id
+                JOIN data_induk di ON ca.siswa_id = di.id
                 LEFT JOIN users u ON ca.dibuat_oleh = u.id
                 $whereClause
                 $orderClause
@@ -173,16 +164,8 @@ try {
             $stmt->execute($params);
             $data = $stmt->fetchAll();
 
-            // Enrich with SPMB data
-            $pendaftaranIds = array_column($data, 'pendaftaran_id');
-            $pendaftaranData = getPendaftaranData($pendaftaranIds);
-
             // Format dates
             foreach ($data as &$row) {
-                $p = $pendaftaranData[$row['pendaftaran_id']] ?? [];
-                $row['nama_lengkap'] = $p['nama'] ?? '-';
-                $row['no_wa_wali'] = $p['no_hp_wali'] ?? '-';
-
                 if ($row['tanggal']) {
                     $row['tanggal_formatted'] = date('d M Y H:i', strtotime($row['tanggal']));
                 }
@@ -364,23 +347,11 @@ try {
                 throw new Exception('ID tidak ditemukan');
             }
 
-            // Delete associated files
-            $stmt = $pdo->prepare("SELECT foto_dokumen_1, foto_dokumen_2 FROM catatan_aktivitas WHERE id = ?");
-            $stmt->execute([$id]);
-            $row = $stmt->fetch();
+            // Soft delete - move to trash (don't delete files yet)
+            $pdo->prepare("UPDATE catatan_aktivitas SET deleted_at = NOW(), deleted_by = ? WHERE id = ?")->execute([$user['id'], $id]);
+            logActivity('DELETE', 'catatan_aktivitas', $id, null, null, null, 'Hapus aktivitas ke trash');
 
-            if ($row) {
-                if ($row['foto_dokumen_1'] && file_exists(__DIR__ . '/../uploads/' . $row['foto_dokumen_1'])) {
-                    unlink(__DIR__ . '/../uploads/' . $row['foto_dokumen_1']);
-                }
-                if ($row['foto_dokumen_2'] && file_exists(__DIR__ . '/../uploads/' . $row['foto_dokumen_2'])) {
-                    unlink(__DIR__ . '/../uploads/' . $row['foto_dokumen_2']);
-                }
-            }
-
-            $pdo->prepare("DELETE FROM catatan_aktivitas WHERE id = ?")->execute([$id]);
-
-            echo json_encode(['status' => 'success', 'message' => 'Data berhasil dihapus']);
+            echo json_encode(['status' => 'success', 'message' => 'Data dipindahkan ke trash']);
             break;
 
         // ============================================
@@ -401,24 +372,13 @@ try {
                 throw new Exception('Tidak ada data yang dipilih');
             }
 
-            // Delete associated files
+            // Soft delete - move to trash (don't delete files yet)
             $placeholders = implode(',', array_fill(0, count($ids), '?'));
-            $stmt = $pdo->prepare("SELECT foto_dokumen_1, foto_dokumen_2 FROM catatan_aktivitas WHERE id IN ($placeholders)");
-            $stmt->execute($ids);
-            $rows = $stmt->fetchAll();
+            $params = array_merge([date('Y-m-d H:i:s'), $user['id']], $ids);
+            $pdo->prepare("UPDATE catatan_aktivitas SET deleted_at = ?, deleted_by = ? WHERE id IN ($placeholders)")->execute($params);
+            logActivity('DELETE', 'catatan_aktivitas', null, null, null, null, 'Hapus ' . count($ids) . ' aktivitas ke trash');
 
-            foreach ($rows as $row) {
-                if ($row['foto_dokumen_1'] && file_exists(__DIR__ . '/../uploads/' . $row['foto_dokumen_1'])) {
-                    unlink(__DIR__ . '/../uploads/' . $row['foto_dokumen_1']);
-                }
-                if ($row['foto_dokumen_2'] && file_exists(__DIR__ . '/../uploads/' . $row['foto_dokumen_2'])) {
-                    unlink(__DIR__ . '/../uploads/' . $row['foto_dokumen_2']);
-                }
-            }
-
-            $pdo->prepare("DELETE FROM catatan_aktivitas WHERE id IN ($placeholders)")->execute($ids);
-
-            echo json_encode(['status' => 'success', 'message' => 'Data terpilih berhasil dihapus']);
+            echo json_encode(['status' => 'success', 'message' => 'Data dipindahkan ke trash']);
             break;
 
         default:

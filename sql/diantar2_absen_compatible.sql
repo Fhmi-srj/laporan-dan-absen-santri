@@ -1,4 +1,4 @@
-/*
+﻿/*
  Navicat Premium Dump SQL
 
  Source Server         : XAMPP_Connection
@@ -24,23 +24,23 @@ DROP TABLE IF EXISTS `activity_logs`;
 CREATE TABLE `activity_logs`  (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
-  `user_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `device_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `ip_address` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `action` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `table_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `user_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  `device_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  `ip_address` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  `action` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `table_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
   `record_id` int NULL DEFAULT NULL,
-  `record_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `record_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
   `old_data` json NULL,
   `new_data` json NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
   INDEX `idx_action`(`action` ASC) USING BTREE,
   INDEX `idx_table_name`(`table_name` ASC) USING BTREE,
   INDEX `idx_created_at`(`created_at` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of activity_logs
@@ -325,7 +325,7 @@ INSERT INTO `data_induk` VALUES (144, 365, 'SHOFANA NADIA', 'II B', NULL, 'Umum'
 INSERT INTO `data_induk` VALUES (145, 371, 'ALFA KAMELIA PUTRI', 'II B', NULL, 'Umum', '510033260058240064', 'SMP NU BP', 'AKTIF', 'Pekalongan', '2012-07-21', 'P', 1, '3326130102120008.0', '3326136107120005', NULL, NULL, 'Desa Kedung Patangewu, Kec. Kedungwuni, Kab. Pekalongan', NULL, 'PONDOK PP MAMBAUL HUDA', 'ALI SHODIKIN', 'Batang', '1970-09-27', '3326122709700001', 'Wiraswasta', 'Di bawah Rp. 4.000.000', 'SRI IRNAWATI', 'Pekalongan', '1981-05-08', '3326124605810004', 'Menggurus Rumah Tangga', 'Di bawah Rp. 1.000.000', '62815750736890', NULL, NULL, '2026-01-06 06:36:02', '2026-01-06 06:36:02', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 INSERT INTO `data_induk` VALUES (146, 372, 'MUHAMMAD ALMAS ALBANY', 'II A', NULL, 'Umum', '510033260058240064', 'SMP NU BP', 'AKTIF', 'Pekalongan', '2011-11-19', 'L', 3, '3326081509050005.0', '3326081911110004', NULL, NULL, 'Perumahan Griya Permata Indah Blok A2 No. 19, Desa Tanjungsari, Kec. Kajen, Kab. Pekalongan', 'MI Sullama Taufiq Kajen', 'PONDOK PP MAMBAUL HUDA', 'Moh. Zaenal Muttaqin', 'Pekalongan', '1971-11-27', '3326082711710001', 'PNS', 'Di atas Rp. 4.000.000', 'Handayaningsih', 'Batang', '1981-04-30', '3326087004810022', 'Ibu Rumah Tangga', 'Di bawah Rp. 1.000.000', '882217190300', NULL, NULL, '2026-01-06 06:36:02', '2026-01-06 06:36:02', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 INSERT INTO `data_induk` VALUES (147, 374, 'HIMMA SYARIFATUL AMALIYAH', 'II B', NULL, 'Umum', '510033260058240064', 'SMP NU BP', 'AKTIF', 'Pekalongan', '2012-04-24', 'P', 1, '3375012112110008.0', '3375016404120001', NULL, NULL, 'Desa Pringrejo, Kec. Pekalongan Barat, Kota Pekalongan', 'MI Pringlangu', 'PONDOK PP MAMBAUL HUDA', 'HASSAN BISRI', 'Pekalongan', '1986-09-10', '3375011009660006', 'Guru', 'Di bawah Rp. 4.000.000', 'KHOIRUN NISA', 'Pekalongan', '1991-10-11', '3375015110910006', 'Guru', 'Di bawah Rp. 4.000.000', '62856027222450', NULL, NULL, '2026-01-06 06:36:02', '2026-01-06 06:36:02', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO `data_induk` VALUES (148, 376, 'DWI AYU RAUDHOTUL JANNAH', 'II B', NULL, 'Umum', '510033260058240064', 'SMP NU BP', 'AKTIF', 'Denpasar', '2012-06-02', 'P', 2, '3375010811080008.0', '3375014206120002', NULL, NULL, 'Desa Pasirkeratonkeramat, Kec. Pekalongan Barat, Kota Pekalongan', NULL, 'PONDOK PP MAMBAUL HUDA', 'FATKHU ROΚΗΜΑΝ', 'Pekalongan', '1980-12-13', '3375011312800007', 'Buruh Harian Lepas', 'Di bawah Rp. 2.500.000', 'MUNIROH', 'Pekalongan', '1984-12-12', '3375015212840009', 'Mengurus Rumah Tangga', 'Di bawah Rp. 1.000.000', '62878295000420', NULL, NULL, '2026-01-06 06:36:02', '2026-01-06 06:36:02', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `data_induk` VALUES (148, 376, 'DWI AYU RAUDHOTUL JANNAH', 'II B', NULL, 'Umum', '510033260058240064', 'SMP NU BP', 'AKTIF', 'Denpasar', '2012-06-02', 'P', 2, '3375010811080008.0', '3375014206120002', NULL, NULL, 'Desa Pasirkeratonkeramat, Kec. Pekalongan Barat, Kota Pekalongan', NULL, 'PONDOK PP MAMBAUL HUDA', 'FATKHU ROÎšÎ—ÎœÎ‘Î', 'Pekalongan', '1980-12-13', '3375011312800007', 'Buruh Harian Lepas', 'Di bawah Rp. 2.500.000', 'MUNIROH', 'Pekalongan', '1984-12-12', '3375015212840009', 'Mengurus Rumah Tangga', 'Di bawah Rp. 1.000.000', '62878295000420', NULL, NULL, '2026-01-06 06:36:02', '2026-01-06 06:36:02', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 INSERT INTO `data_induk` VALUES (149, 378, 'AHMAD FATKHUR MIRZAQ', 'II A', NULL, 'Umum', '510033260058240064', 'SMP NU BP', 'AKTIF', 'Pekalongan', '2012-04-12', 'L', 1, '3326152906120003.0', '3325151204120001', NULL, NULL, 'Desa Mulyorejo, Kec. Tirto, Kab. Pekalongan', NULL, 'PONDOK PP MAMBAUL HUDA', 'RIWAN', 'Pekalongan', '1985-08-23', '3326152308850001', 'Buruh Harian Lepas', 'Di bawah Rp. 2.500.000', 'RISCIANA', 'Pekalongan', '1986-06-21', '3326136106860061', 'Burub Harian Lepas', 'Di bawah Rp. 2.500.000', '62856407248360', NULL, NULL, '2026-01-06 06:36:02', '2026-01-06 06:36:02', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 INSERT INTO `data_induk` VALUES (150, 379, 'CHIKA MARETA', 'V', NULL, 'Umum', '510033260058240064', 'MA ALHIKAM', 'AKTIF', 'Pekalongan', '2009-03-20', 'P', 2, '3326050402080003.0', '3326056003090001', NULL, NULL, 'Desa Donowangun, Kec. Talun, Kab. Pekalongan', NULL, 'PONDOK PP MAMBAUL HUDA', 'KHADIRIN', 'Pekalongan', '1985-04-28', '3326052804850001', 'Buruh  Harian Lepas', 'Di bawah Rp. 2.500.000', 'HERMAWATI', 'Pekalongan', '1987-11-21', '3326056108870001', 'Mengurus Rumah Tangga', 'Di bawah Rp. 1.000.000', '62815423961310', NULL, NULL, '2026-01-06 06:36:02', '2026-01-06 06:36:02', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 INSERT INTO `data_induk` VALUES (151, 380, 'GALANG WAHYU SAPUTRA', 'II A', NULL, 'Umum', '510033260058240064', 'SMP NU BP', 'AKTIF', 'Pekalongan', '2012-01-24', 'L', NULL, '3326181407070102.0', '3326182401120002', NULL, NULL, 'Desa Logandeng, Kec. Karangdadap, Kab. Pekalongan', NULL, 'PONDOK PP MAMBAUL HUDA', 'UUS SUTARDI', 'Pekalongan', NULL, '3326182705740002', 'Karyawan Swasta', 'Di bawah Rp. 2.500.000', NULL, NULL, NULL, NULL, NULL, NULL, '62813864320260', NULL, NULL, '2026-01-06 06:36:02', '2026-01-06 06:36:02', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -480,13 +480,13 @@ INSERT INTO `settings` VALUES (10, 'radius_meters', '100', '2026-01-05 03:59:40'
 DROP TABLE IF EXISTS `system_settings`;
 CREATE TABLE `system_settings`  (
   `id` int NOT NULL AUTO_INCREMENT,
-  `setting_key` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `setting_value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL,
-  `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `setting_key` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `setting_value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
+  `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `setting_key`(`setting_key` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of system_settings
@@ -550,3 +550,4 @@ INSERT INTO `users` VALUES (5, 'Pak Satpam', 'keamanan@mambaul-huda.com', '$2y$1
 INSERT INTO `users` VALUES (6, 'Ibu Dokter', 'kesehatan@mambaul-huda.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Klinik Pondok', 'kesehatan', 'profile.jpg', '081234567895', NULL, '2026-01-05 03:59:39', '2026-01-05 03:59:39', NULL, NULL);
 
 SET FOREIGN_KEY_CHECKS = 1;
+

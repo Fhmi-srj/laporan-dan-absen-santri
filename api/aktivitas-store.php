@@ -38,6 +38,13 @@ try {
 
     if (!$siswaId) {
         $missingFields[] = 'Siswa belum dipilih';
+    } else {
+        // Validate siswa exists in data_induk (and not deleted)
+        $checkStmt = $pdo->prepare("SELECT id FROM data_induk WHERE id = ? AND deleted_at IS NULL");
+        $checkStmt->execute([$siswaId]);
+        if (!$checkStmt->fetch()) {
+            $missingFields[] = 'Siswa tidak ditemukan di database';
+        }
     }
     if (!$kategori) {
         $missingFields[] = 'Kategori tidak valid';
@@ -130,6 +137,24 @@ try {
         $foto2,
         $user['id']
     ]);
+
+    $newId = $pdo->lastInsertId();
+
+    // Get santri name for logging
+    $santriStmt = $pdo->prepare("SELECT nama_lengkap FROM data_induk WHERE id = ?");
+    $santriStmt->execute([$siswaId]);
+    $santriName = $santriStmt->fetchColumn();
+
+    // Log activity with complete data
+    logActivity('CREATE', 'catatan_aktivitas', $newId, $santriName, null, [
+        'nama' => $santriName,
+        'kategori' => $kategori,
+        'judul' => $_POST['judul'] ?? null,
+        'tanggal_mulai' => $tanggal,
+        'tanggal_selesai' => $tanggalSelesai,
+        'keterangan' => $_POST['keterangan'] ?? null,
+        'status' => $statusKegiatan
+    ], "Tambah aktivitas $kategori untuk $santriName");
 
     echo json_encode(['status' => 'success', 'message' => 'Data aktivitas berhasil disimpan!']);
 } catch (Exception $e) {

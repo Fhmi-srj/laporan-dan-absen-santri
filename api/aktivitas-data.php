@@ -2,6 +2,7 @@
 /**
  * API: Get Aktivitas Data (for DataTables)
  * Laporan Santri - PHP Murni
+ * Now uses data_induk table directly
  */
 
 require_once __DIR__ . '/../functions.php';
@@ -26,7 +27,7 @@ $length = (int) ($_POST['length'] ?? $_GET['length'] ?? 10);
 $draw = (int) ($_POST['draw'] ?? $_GET['draw'] ?? 1);
 
 // Build query
-$where = [];
+$where = ['ca.deleted_at IS NULL'];  // Only show non-deleted records
 $params = [];
 
 if ($kategori && $kategori !== 'all') {
@@ -44,9 +45,10 @@ if ($tanggalSampai) {
     $params[] = $tanggalSampai;
 }
 
-// Search - simplified, will filter after SPMB enrichment for name search
+// Search - now includes nama_lengkap from data_induk
 if ($searchKeyword) {
-    $where[] = "(ca.judul LIKE ? OR ca.keterangan LIKE ? OR ca.status_kegiatan LIKE ?)";
+    $where[] = "(di.nama_lengkap LIKE ? OR ca.judul LIKE ? OR ca.keterangan LIKE ? OR ca.status_kegiatan LIKE ?)";
+    $params[] = "%$searchKeyword%";
     $params[] = "%$searchKeyword%";
     $params[] = "%$searchKeyword%";
     $params[] = "%$searchKeyword%";
@@ -60,7 +62,7 @@ if ($user['role'] === 'kesehatan') {
 $whereClause = count($where) > 0 ? 'WHERE ' . implode(' AND ', $where) : '';
 
 // Count total
-$countSql = "SELECT COUNT(*) FROM catatan_aktivitas ca JOIN siswa s ON ca.siswa_id = s.id $whereClause";
+$countSql = "SELECT COUNT(*) FROM catatan_aktivitas ca JOIN data_induk di ON ca.siswa_id = di.id $whereClause";
 $countStmt = $pdo->prepare($countSql);
 $countStmt->execute($params);
 $totalRecords = $countStmt->fetchColumn();
@@ -74,7 +76,7 @@ $columnMap = [
     0 => 'ca.id',
     1 => 'ca.tanggal',
     2 => 'ca.tanggal_selesai',
-    3 => 's.pendaftaran_id', // Will sort by ID as proxy for name
+    3 => 'di.nama_lengkap',
     4 => 'ca.kategori',
     5 => 'ca.judul',
     6 => 'ca.keterangan'
@@ -89,12 +91,13 @@ if (isset($_POST['order'][0]['column']) && isset($_POST['order'][0]['dir'])) {
     }
 }
 
-// Get data
+// Get data with JOIN to data_induk
 $sql = "
-    SELECT ca.*, s.nomor_induk, s.kelas, s.pendaftaran_id,
+    SELECT ca.*, 
+           di.nama_lengkap, di.kelas, di.nisn as nomor_induk, di.no_wa_wali,
            u.name as pembuat_nama
     FROM catatan_aktivitas ca
-    JOIN siswa s ON ca.siswa_id = s.id
+    JOIN data_induk di ON ca.siswa_id = di.id
     LEFT JOIN users u ON ca.dibuat_oleh = u.id
     $whereClause
     ORDER BY $orderColumn $orderDir
@@ -104,20 +107,9 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $data = $stmt->fetchAll();
 
-// Enrich with SPMB data
-$pendaftaranIds = array_column($data, 'pendaftaran_id');
-$pendaftaranData = getPendaftaranData($pendaftaranIds);
-foreach ($data as &$row) {
-    $p = $pendaftaranData[$row['pendaftaran_id']] ?? [];
-    $row['nama_lengkap'] = $p['nama'] ?? '-';
-    $row['no_wa_wali'] = $p['no_hp_wali'] ?? '-';
-}
-unset($row);
-
 echo json_encode([
     'draw' => $draw,
     'recordsTotal' => $totalRecords,
     'recordsFiltered' => $totalRecords,
     'data' => $data
 ]);
-

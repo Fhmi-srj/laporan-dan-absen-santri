@@ -243,61 +243,57 @@ $(document).ready(function () {
         lines.push('');
 
         data.forEach((item, idx) => {
-            lines.push((idx + 1) + '. ' + (item.nama_lengkap || '-'));
+            // Nama Santri (bold with asterisks for WhatsApp)
+            lines.push((idx + 1) + '. *' + (item.nama_lengkap || '-') + '*');
 
+            // Format tanggal sesuai kategori
             switch (kategori) {
                 case 'sakit':
-                    lines.push('   Tanggal Sakit: ' + formatDateTime(item.tanggal));
-                    lines.push('   Tanggal Sembuh: ' + formatDateTime(item.tanggal_selesai));
-                    lines.push('   Diagnosa: ' + (item.judul || '-'));
-                    lines.push('   Status: ' + (item.status_kegiatan || '-'));
-                    lines.push('   Keterangan: ' + (item.keterangan || '-'));
+                    let tglSembuh = item.tanggal_selesai ? formatDateOnly(item.tanggal_selesai) : '(belum sembuh)';
+                    lines.push('   ' + formatDateOnly(item.tanggal) + ' - ' + tglSembuh);
+                    let sakitInfo = (item.judul || '-');
+                    if (item.status_kegiatan) sakitInfo += ' | ' + item.status_kegiatan;
+                    lines.push('   ' + sakitInfo);
                     break;
                 case 'izin_keluar':
-                    lines.push('   Tanggal Pergi: ' + formatDateTime(item.tanggal));
-                    lines.push('   Batas Waktu: ' + formatDateTime(item.batas_waktu));
-                    lines.push('   Tanggal Kembali: ' + formatDateTime(item.tanggal_selesai));
-                    lines.push('   Keperluan: ' + (item.judul || '-'));
-                    lines.push('   Keterangan: ' + (item.keterangan || '-'));
-                    break;
                 case 'izin_pulang':
-                    lines.push('   Tanggal Pergi: ' + formatDateTime(item.tanggal));
-                    lines.push('   Batas Waktu: ' + formatDateTime(item.batas_waktu));
-                    lines.push('   Tanggal Kembali: ' + formatDateTime(item.tanggal_selesai));
-                    lines.push('   Alasan: ' + (item.judul || '-'));
-                    lines.push('   Keterangan: ' + (item.keterangan || '-'));
+                    let tglKembali = item.tanggal_selesai ? formatDateOnly(item.tanggal_selesai) : '(belum kembali)';
+                    lines.push('   ' + formatDateOnly(item.tanggal) + ' - ' + tglKembali);
+                    lines.push('   ' + (item.judul || '-'));
                     break;
                 case 'sambangan':
-                    lines.push('   Tanggal: ' + formatDateTime(item.tanggal));
-                    lines.push('   Nama Penjenguk: ' + (item.judul || '-'));
-                    lines.push('   Hubungan: ' + (item.status_sambangan || '-'));
-                    lines.push('   Keterangan: ' + (item.keterangan || '-'));
+                    lines.push('   ' + formatDateOnly(item.tanggal));
+                    lines.push('   ' + (item.judul || '-') + ' (' + (item.status_sambangan || '-') + ')');
                     break;
                 case 'pelanggaran':
-                    lines.push('   Tanggal: ' + formatDateTime(item.tanggal));
-                    lines.push('   Jenis Pelanggaran: ' + (item.judul || '-'));
-                    lines.push('   Keterangan: ' + (item.keterangan || '-'));
+                    lines.push('   ' + formatDateOnly(item.tanggal));
+                    lines.push('   ' + (item.judul || '-'));
                     break;
                 case 'paket':
-                    lines.push('   Tanggal Tiba: ' + formatDateTime(item.tanggal));
-                    lines.push('   Tanggal Terima: ' + formatDateTime(item.tanggal_selesai));
-                    lines.push('   Isi Paket: ' + (item.judul || '-'));
-                    lines.push('   Keterangan: ' + (item.keterangan || '-'));
+                    let tglTerima = item.tanggal_selesai ? formatDateOnly(item.tanggal_selesai) : '(belum diterima)';
+                    lines.push('   ' + formatDateOnly(item.tanggal) + ' - ' + tglTerima);
+                    let paketInfo = (item.judul || '-');
+                    if (item.status_kegiatan) paketInfo += ' | ' + item.status_kegiatan;
+                    lines.push('   ' + paketInfo);
                     break;
                 case 'hafalan':
-                    lines.push('   Tanggal: ' + formatDateTime(item.tanggal));
-                    lines.push('   Nama Kitab/Surat: ' + (item.judul || '-'));
-                    lines.push('   Keterangan: ' + (item.keterangan || '-'));
+                    lines.push('   ' + formatDateOnly(item.tanggal));
+                    lines.push('   ' + (item.judul || '-'));
                     break;
                 default:
-                    lines.push('   Tanggal: ' + formatDateTime(item.tanggal));
-                    lines.push('   Judul: ' + (item.judul || '-'));
-                    lines.push('   Keterangan: ' + (item.keterangan || '-'));
+                    lines.push('   ' + formatDateOnly(item.tanggal));
+                    lines.push('   ' + (item.judul || '-'));
             }
-            lines.push('');
         });
 
         return lines.join('\n');
+    }
+
+    function formatDateOnly(dateStr) {
+        if (!dateStr) return '-';
+        let d = new Date(dateStr);
+        if (isNaN(d.getTime())) return '-';
+        return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
     }
 
     function formatDateTime(dateStr) {
@@ -519,7 +515,7 @@ $(document).ready(function () {
                         requestData.image = item.foto_dokumen_1;
                     }
 
-                    $.post('api/send-wa.php', requestData).done(function (res) {
+                    $.post('api/kirim-wa.php', requestData).done(function (res) {
                         if (res.status === 'success') {
                             sent++;
                         } else {
@@ -563,7 +559,7 @@ $(document).ready(function () {
             cancelButtonText: 'Batal'
         }).then((r) => {
             if (r.isConfirmed) {
-                $.post("api/bulk-delete.php", { csrf_token: csrfToken, ids: ids })
+                $.post("api/hapus-massal.php", { csrf_token: csrfToken, ids: ids })
                     .done(function () { table.draw(); Swal.fire('Sukses', 'Data berhasil dihapus', 'success'); })
                     .fail(function () { Swal.fire('Error', 'Gagal menghapus data', 'error'); });
             }
@@ -584,7 +580,7 @@ $(document).ready(function () {
             cancelButtonText: 'Batal'
         }).then((r) => {
             if (r.isConfirmed) {
-                $.post("api/bulk-delete.php", { csrf_token: csrfToken, ids: [id] })
+                $.post("api/hapus-massal.php", { csrf_token: csrfToken, ids: [id] })
                     .done(function () { table.draw(); Swal.fire('Sukses', 'Data berhasil dihapus', 'success'); })
                     .fail(function () { Swal.fire('Error', 'Gagal menghapus data', 'error'); });
             }
@@ -643,7 +639,7 @@ $(document).ready(function () {
                 }
 
                 // Send via API
-                $.post('api/send-wa.php', requestData).done(function (res) {
+                $.post('api/kirim-wa.php', requestData).done(function (res) {
                     if (res.status === 'success') {
                         Swal.fire({
                             icon: 'success',
@@ -671,7 +667,7 @@ $(document).ready(function () {
     $('#input_cari').on('keyup', function () {
         let kw = $(this).val();
         if (kw.length < 3) { $('#hasil_autocomplete').addClass('d-none'); return; }
-        $.get("api/cari-siswa.php", { keyword: kw }, function (res) {
+        $.get("api/cari-santri.php", { keyword: kw }, function (res) {
             if (res.status == 'success') {
                 let html = '';
                 res.data.forEach(s => {
@@ -922,7 +918,7 @@ $(document).ready(function () {
         let originalHtml = btn.html();
         btn.html('<span class="spinner-border spinner-border-sm"></span> Mengirim...').prop('disabled', true);
 
-        $.post('api/send-wa.php', { phone: currentWaPhone, message: msg })
+        $.post('api/kirim-wa.php', { phone: currentWaPhone, message: msg })
             .done(function (res) {
                 if (res.status === 'success') {
                     Swal.fire('Berhasil!', 'Pesan WhatsApp telah terkirim ke wali siswa', 'success');
@@ -984,8 +980,66 @@ $(document).ready(function () {
 
     // Utilities
     function resetFotoPreview() {
-        $('.foto-preview').addClass('d-none').attr('src', '');
+        $('.foto-preview, .photo-preview-container img').addClass('d-none').attr('src', '');
+        $('.photo-preview-container').addClass('d-none');
+        $('.photo-upload-buttons').removeClass('d-none');
+        $('.photo-upload-wrapper').removeClass('has-preview');
     }
+
+    // Handle photo selection (from camera or file picker)
+    window.handlePhotoSelect = function (input, previewId, wrapperId, copyToInputId = null) {
+        if (input.files && input.files[0]) {
+            let file = input.files[0];
+
+            // If this is from camera input, copy file to main input
+            if (copyToInputId) {
+                let mainInput = document.getElementById(copyToInputId);
+                let dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                mainInput.files = dataTransfer.files;
+            }
+
+            let reader = new FileReader();
+            reader.onload = function (e) {
+                let preview = document.getElementById(previewId);
+                let wrapper = document.getElementById(wrapperId);
+                let container = document.getElementById('container_' + previewId.replace('preview_', ''));
+                let buttons = document.getElementById('buttons_' + previewId.replace('preview_', ''));
+
+                preview.src = e.target.result;
+                if (container) {
+                    container.classList.remove('d-none');
+                }
+                if (buttons) {
+                    buttons.classList.add('d-none');
+                }
+                if (wrapper) {
+                    wrapper.classList.add('has-preview');
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    // Remove photo and reset UI
+    window.removePhoto = function (inputId, previewId, wrapperId, containerId, buttonsId) {
+        let input = document.getElementById(inputId);
+        let cameraInput = document.getElementById('camera_' + inputId.replace('input_', ''));
+        let preview = document.getElementById(previewId);
+        let wrapper = document.getElementById(wrapperId);
+        let container = document.getElementById(containerId);
+        let buttons = document.getElementById(buttonsId);
+
+        // Clear file inputs
+        if (input) input.value = '';
+        if (cameraInput) cameraInput.value = '';
+
+        // Reset UI
+        if (preview) preview.src = '';
+        if (container) container.classList.add('d-none');
+        if (buttons) buttons.classList.remove('d-none');
+        if (wrapper) wrapper.classList.remove('has-preview');
+    };
 
     window.previewFoto = function (input, pid) {
         if (input.files && input.files[0]) {
@@ -1003,7 +1057,7 @@ $(document).ready(function () {
         scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
             scanner.stop();
             $('#area_kamera').addClass('d-none');
-            $.get("api/cari-siswa.php", { keyword: txt }, function (res) {
+            $.get("api/cari-santri.php", { keyword: txt }, function (res) {
                 if (res.status == 'success' && res.data.length > 0) {
                     let s = res.data[0];
                     pilihSiswa(s.id, s.nama_lengkap, s.nomor_induk, s.kelas, s.alamat, s.no_wa_wali);
