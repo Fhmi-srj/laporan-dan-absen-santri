@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Print Server - Aktivitas Santri</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #059669;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .server-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 700px;
+            margin: 30px auto;
+        }
+
+        .status-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-active {
+            background: #10b981;
+        }
+
+        .status-inactive {
+            background: #ef4444;
+            animation: none;
+        }
+
+        .status-printing {
+            background: #f59e0b;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.7;
+                transform: scale(1.1);
+            }
+        }
+
+        .log-container {
+            background: #1e293b;
+            color: #94a3b8;
+            border-radius: 12px;
+            padding: 20px;
+            height: 280px;
+            overflow-y: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 0.85rem;
+        }
+
+        .log-success {
+            color: #10b981;
+        }
+
+        .log-error {
+            color: #ef4444;
+        }
+
+        .log-info {
+            color: #60a5fa;
+        }
+
+        .log-warning {
+            color: #f59e0b;
+        }
+
+        .stat-box {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .config-box {
+            background: #fffbeb;
+            border: 1px solid #fbbf24;
+            border-radius: 12px;
+            padding: 15px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="server-card">
+            <div class="text-center mb-4">
+                <i class="fas fa-print fa-3x text-success mb-3"></i>
+                <h3 class="fw-bold">Print Server (Local)</h3>
+                <p class="text-muted">Halaman ini berjalan di komputer kantor, polling antrian dari hosting</p>
+            </div>
+
+            <!-- Config -->
+            <div class="config-box mb-4">
+                <label class="form-label fw-bold"><i class="fas fa-globe me-1"></i> URL Website Hosting</label>
+                <input type="text" class="form-control" id="apiBaseUrl" value="https://absen.mambaulhuda.ponpes.id"
+                    placeholder="https://absen.mambaulhuda.ponpes.id">
+                <small class="text-muted">Masukkan URL hosting website Anda (tanpa trailing slash)</small>
+            </div>
+
+            <!-- Status -->
+            <div class="d-flex align-items-center justify-content-center mb-4 p-3 rounded" style="background: #f0fdf4;">
+                <span class="status-indicator status-inactive" id="statusIndicator"></span>
+                <span class="fw-bold" id="statusText">Menunggu koneksi...</span>
+            </div>
+
+            <!-- Stats -->
+            <div class="row g-3 mb-4">
+                <div class="col-3">
+                    <div class="stat-box">
+                        <div class="stat-number" id="statPending">0</div>
+                        <small class="text-muted">Antrian</small>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="stat-box">
+                        <div class="stat-number" id="statProcessing">0</div>
+                        <small class="text-muted">Proses</small>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="stat-box">
+                        <div class="stat-number" id="statCompleted">0</div>
+                        <small class="text-muted">Selesai</small>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="stat-box">
+                        <div class="stat-number text-danger" id="statFailed">0</div>
+                        <small class="text-muted">Gagal</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="d-flex gap-2 mb-4">
+                <button class="btn btn-success flex-grow-1" id="btnStart" onclick="startServer()">
+                    <i class="fas fa-play me-1"></i> Mulai Server
+                </button>
+                <button class="btn btn-danger" id="btnStop" onclick="stopServer()" disabled>
+                    <i class="fas fa-stop me-1"></i> Stop
+                </button>
+            </div>
+
+            <!-- Log -->
+            <div class="log-container" id="logContainer">
+                <div class="log-info">[System] Print Server siap. Masukkan URL hosting lalu klik "Mulai Server".</div>
+            </div>
+
+            <div class="mt-3 text-center">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Jalankan halaman ini dari <strong>localhost</strong>, bukan dari hosting
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.min.js"></script>
+    <script>
+        let serverRunning = false;
+        let pollInterval = null;
+        let qzConnected = false;
+        let processingJobs = new Set(); // Track jobs being processed to prevent duplicates
+        const POLL_INTERVAL_MS = 1000; // Check every 1 second for faster response
+        const PRINTER_NAME = 'POS-58';
+
+        function getApiUrl() {
+            return document.getElementById('apiBaseUrl').value.replace(/\/+$/, '');
+        }
+
+        function addLog(message, type = 'info') {
+            const container = document.getElementById('logContainer');
+            const time = new Date().toLocaleTimeString('id-ID');
+            const div = document.createElement('div');
+            div.className = `log-${type}`;
+            div.innerHTML = `[${time}] ${message}`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function setStatus(status, text) {
+            document.getElementById('statusIndicator').className = 'status-indicator status-' + status;
+            document.getElementById('statusText').textContent = text;
+        }
+
+        async function updateStats() {
+            try {
+                const res = await fetch(`${getApiUrl()}/api/print-queue.php?action=stats`);
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('statPending').textContent = data.stats.pending || 0;
+                    document.getElementById('statProcessing').textContent = data.stats.processing || 0;
+                    document.getElementById('statCompleted').textContent = data.stats.completed_today || 0;
+                    document.getElementById('statFailed').textContent = data.stats.failed_today || 0;
+                }
+            } catch (e) {
+                console.error('Stats error:', e);
+            }
+        }
+
+        // Initialize QZ Tray with proper signing
+        async function initQzTray() {
+            if (typeof qz === 'undefined') {
+                throw new Error('QZ Tray library not loaded');
+            }
+
+            // Setup security - use localhost signing
+            qz.security.setCertificatePromise(function (resolve, reject) {
+                // Fetch certificate from localhost
+                fetch('http://localhost/Aktivitas_santri/assets/certs/digital-certificate.txt', { cache: 'no-store' })
+                    .then(function (response) {
+                        if (response.ok) return response.text();
+                        throw new Error('Certificate not found');
+                    })
+                    .then(resolve)
+                    .catch(reject);
+            });
+
+            qz.security.setSignatureAlgorithm("SHA512");
+            qz.security.setSignaturePromise(function (toSign) {
+                return function (resolve, reject) {
+                    fetch('http://localhost/Aktivitas_santri/api/qz-sign.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain' },
+                        body: toSign
+                    })
+                        .then(function (response) {
+                            if (response.ok) return response.text();
+                            throw new Error('Signing failed');
+                        })
+                        .then(resolve)
+                        .catch(reject);
+                };
+            });
+
+            try {
+                if (!qz.websocket.isActive()) {
+                    await qz.websocket.connect();
+                }
+                qzConnected = true;
+                return true;
+            } catch (err) {
+                qzConnected = false;
+                throw err;
+            }
+        }
+
+        // Print function
+        async function printSuratIzin(data) {
+            const config = qz.configs.create(PRINTER_NAME, {
+                size: { width: 58, height: null },
+                units: 'mm',
+                margins: { top: 0, left: 0, right: 0, bottom: 0 }
+            });
+
+            // Generate text
+            const divider = '================================';
+            const dividerThin = '--------------------------------';
+
+            let text = '';
+            text += divider + '\n';
+            text += centerText('PONDOK PESANTREN') + '\n';
+            text += centerText("MAMBA'UL HUDA") + '\n';
+            text += centerText('PAJOMBLANGAN') + '\n';
+            text += divider + '\n';
+            text += centerText('SURAT IZIN SEKOLAH') + '\n';
+            text += centerText('NO: ' + data.nomorSurat) + '\n';
+            text += dividerThin + '\n\n';
+            text += 'Kepada Yth.\n';
+            text += 'Bapak/Ibu Guru ' + (data.tujuanGuru || '') + '\n\n';
+            text += "Assalamu'alaikum Wr. Wb.\n\n";
+            text += 'Dengan hormat, melalui surat\n';
+            text += 'ini kami memberitahukan bahwa:\n\n';
+            text += 'Nama    : ';
+            if (data.santriNames && data.santriNames.length > 0) {
+                data.santriNames.forEach((name, idx) => {
+                    if (idx === 0) {
+                        text += name + '\n';
+                    } else {
+                        text += '          ' + name + '\n';
+                    }
+                });
+            }
+            text += 'Kelas   : ' + (data.kelas || '-') + '\n';
+            text += 'Ket     : Izin tidak mengikuti\n';
+            text += '          KBM\n';
+            text += 'Tanggal : ' + (data.tanggal || '-') + '\n';
+            text += 'Alasan  : ' + (data.kategori === 'sakit' ? 'Sakit' : 'Izin Pulang') + '\n\n';
+            text += 'Demikian surat ini kami\n';
+            text += 'sampaikan. Atas perhatian\n';
+            text += 'Bapak/Ibu, kami ucapkan\n';
+            text += 'terima kasih.\n\n';
+            text += "Wassalamu'alaikum Wr. Wb.\n\n";
+            text += 'Hormat kami,\n\n\n\n';
+            text += 'Pengurus Izin\n';
+            text += divider + '\n';
+
+            const printData = [
+                '\x1B\x40',          // Initialize
+                '\x1B\x61\x00',      // Left align
+                text,
+                '\x1B\x64\x03',      // Feed 3 lines
+                '\x1D\x56\x00'       // Cut paper
+            ];
+
+            await qz.print(config, printData);
+        }
+
+        function centerText(text, width = 32) {
+            const padding = Math.max(0, Math.floor((width - text.length) / 2));
+            return ' '.repeat(padding) + text;
+        }
+
+        async function startServer() {
+            const apiUrl = getApiUrl();
+            if (!apiUrl) {
+                addLog('❌ Masukkan URL hosting terlebih dahulu!', 'error');
+                return;
+            }
+
+            addLog('Menginisialisasi QZ Tray...', 'info');
+
+            try {
+                await initQzTray();
+                addLog('✅ QZ Tray terhubung', 'success');
+
+                // Test API connection
+                addLog(`🔗 Menghubungkan ke ${apiUrl}...`, 'info');
+                const testRes = await fetch(`${apiUrl}/api/print-queue.php?action=stats`);
+                if (!testRes.ok) throw new Error('API tidak dapat diakses');
+                addLog('✅ API terhubung', 'success');
+
+                serverRunning = true;
+                document.getElementById('btnStart').disabled = true;
+                document.getElementById('btnStop').disabled = false;
+                document.getElementById('apiBaseUrl').disabled = true;
+                setStatus('active', 'Server Aktif - Menunggu antrian...');
+
+                addLog('🚀 Print Server dimulai. Polling setiap 1 detik...', 'success');
+
+                pollInterval = setInterval(pollQueue, POLL_INTERVAL_MS);
+                pollQueue();
+
+            } catch (e) {
+                addLog('❌ Error: ' + e.message, 'error');
+            }
+        }
+
+        function stopServer() {
+            serverRunning = false;
+            if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+            }
+            document.getElementById('btnStart').disabled = false;
+            document.getElementById('btnStop').disabled = true;
+            document.getElementById('apiBaseUrl').disabled = false;
+            setStatus('inactive', 'Server Dihentikan');
+            addLog('⏹️ Print Server dihentikan', 'warning');
+        }
+
+        async function pollQueue() {
+            if (!serverRunning) return;
+
+            try {
+                const res = await fetch(`${getApiUrl()}/api/print-queue.php?action=pending`);
+                const data = await res.json();
+                updateStats();
+
+                if (data.success && data.jobs && data.jobs.length > 0) {
+                    for (const job of data.jobs) {
+                        // Skip if already processing this job
+                        if (processingJobs.has(job.id)) {
+                            continue;
+                        }
+                        await processJob(job);
+                    }
+                }
+            } catch (e) {
+                console.error('Poll error:', e);
+            }
+        }
+
+        async function processJob(job) {
+            // Mark as being processed locally
+            processingJobs.add(job.id);
+
+            addLog(`📄 Memproses job #${job.id}: ${job.job_type}`, 'info');
+            setStatus('printing', 'Mencetak...');
+
+            try {
+                // Mark as processing on server
+                await fetch(`${getApiUrl()}/api/print-queue.php?action=processing&id=${job.id}`);
+
+                // Print
+                if (job.job_type === 'surat_izin') {
+                    await printSuratIzin(job.job_data);
+                }
+
+                // Mark as completed
+                await fetch(`${getApiUrl()}/api/print-queue.php?action=complete&id=${job.id}`);
+                addLog(`✅ Job #${job.id} berhasil dicetak`, 'success');
+
+            } catch (e) {
+                addLog(`❌ Job #${job.id} gagal: ${e.message}`, 'error');
+                await fetch(`${getApiUrl()}/api/print-queue.php?action=fail&id=${job.id}&error=${encodeURIComponent(e.message)}`);
+            }
+
+            // Remove from local tracking
+            processingJobs.delete(job.id);
+
+            setStatus('active', 'Server Aktif - Menunggu antrian...');
+            updateStats();
+        }
+
+        // Initial
+        updateStats();
+    </script>
+</body>
+
+</html>

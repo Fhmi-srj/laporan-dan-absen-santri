@@ -255,6 +255,13 @@ $roleLabels = [
                     <?= $role === 'kesehatan' ? 'Laporan Kesehatan' : 'Aktivitas Santri' ?>
                 </a>
             </li>
+            <!-- PRINT IZIN -->
+            <li>
+                <a href="<?= $basePath ?>print-izin.php"
+                    class="<?= $currentPage === 'print-izin.php' ? 'active' : '' ?>">
+                    <i class="fas fa-print"></i> Print Izin
+                </a>
+            </li>
 
             <?php if ($role === 'admin'): ?>
                 <div class="sidebar-divider"></div>
@@ -429,6 +436,13 @@ $roleLabels = [
                 <a href="<?= $basePath ?>aktivitas.php" class="<?= $currentPage === 'aktivitas.php' ? 'active' : '' ?>">
                     <i class="fas fa-clipboard-list"></i>
                     <?= $role === 'kesehatan' ? 'Laporan Kesehatan' : 'Aktivitas Santri' ?>
+                </a>
+            </li>
+            <!-- PRINT IZIN -->
+            <li>
+                <a href="<?= $basePath ?>print-izin.php"
+                    class="<?= $currentPage === 'print-izin.php' ? 'active' : '' ?>">
+                    <i class="fas fa-print"></i> Print Izin
                 </a>
             </li>
 

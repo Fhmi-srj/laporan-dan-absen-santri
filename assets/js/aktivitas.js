@@ -1076,4 +1076,315 @@ $(document).ready(function () {
         if (scanner) scanner.stop().catch(() => { });
         $('#area_kamera').addClass('d-none');
     });
+
+    // ============================================
+    // PRINT IZIN SEKOLAH FUNCTIONS
+    // ============================================
+
+    let printIzinData = {
+        kategori: 'sakit',
+        selectedSantri: [],
+        nomorSurat: ''
+    };
+
+    // Open Print Izin Modal
+    window.openPrintIzinModal = function () {
+        printIzinData.selectedSantri = [];
+        printIzinData.kategori = 'sakit';
+        $('#print_kat_sakit').prop('checked', true);
+        $('#print_tujuan_guru').val('');
+        $('#print_kelas').val('');
+        $('#print_selected_count').text('0');
+
+        new bootstrap.Modal(document.getElementById('modalPrintIzin')).show();
+
+        loadPrintIzinSantri('sakit');
+        checkQzStatus();
+    };
+
+    // Category change handler
+    $('input[name="print_kategori"]').change(function () {
+        printIzinData.kategori = $(this).val();
+        printIzinData.selectedSantri = [];
+        $('#print_selected_count').text('0');
+        loadPrintIzinSantri(printIzinData.kategori);
+        updatePrintPreview();
+        updatePrintButton();
+    });
+
+    // Load santri list for print
+    function loadPrintIzinSantri(kategori) {
+        $('#print_santri_list').html('<div class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin me-1"></i> Memuat data...</div>');
+
+        $.get('api/print-izin.php', { kategori: kategori })
+            .done(function (res) {
+                if (res.success && res.data.length > 0) {
+                    let html = '';
+                    res.data.forEach((item, idx) => {
+                        let tanggal = item.tanggal ? new Date(item.tanggal).toLocaleDateString('id-ID') : '-';
+                        html += `
+                            <div class="form-check p-2 ${idx % 2 === 0 ? '' : 'bg-white'} rounded">
+                                <input class="form-check-input print-santri-check" type="checkbox" 
+                                    value="${item.siswa_id}" 
+                                    data-nama="${item.nama_lengkap}"
+                                    data-kelas="${item.kelas || ''}"
+                                    id="print_santri_${item.aktivitas_id}">
+                                <label class="form-check-label w-100" for="print_santri_${item.aktivitas_id}">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <span class="fw-bold">${item.nama_lengkap}</span>
+                                            <small class="text-muted ms-2">${item.kelas || '-'}</small>
+                                        </div>
+                                        <small class="text-muted">${tanggal}</small>
+                                    </div>
+                                    <small class="text-muted">${item.judul || item.keterangan || '-'}</small>
+                                </label>
+                            </div>
+                        `;
+                    });
+                    $('#print_santri_list').html(html);
+                } else {
+                    $('#print_santri_list').html('<div class="text-center text-muted py-4"><i class="fas fa-inbox me-1"></i> Tidak ada data dalam 7 hari terakhir</div>');
+                }
+            })
+            .fail(function () {
+                $('#print_santri_list').html('<div class="text-center text-danger py-4">Gagal memuat data</div>');
+            });
+    }
+
+    // Santri checkbox handler
+    $(document).on('change', '.print-santri-check', function () {
+        let santriId = $(this).val();
+        let santriNama = $(this).data('nama');
+        let santriKelas = $(this).data('kelas');
+
+        if ($(this).is(':checked')) {
+            if (printIzinData.selectedSantri.length >= 5) {
+                $(this).prop('checked', false);
+                Swal.fire('Maksimal 5 Santri', 'Anda hanya dapat memilih maksimal 5 santri', 'warning');
+                return;
+            }
+            printIzinData.selectedSantri.push({ id: santriId, nama: santriNama, kelas: santriKelas });
+        } else {
+            printIzinData.selectedSantri = printIzinData.selectedSantri.filter(s => s.id !== santriId);
+        }
+
+        $('#print_selected_count').text(printIzinData.selectedSantri.length);
+
+        // Auto-fill kelas if only one selected
+        if (printIzinData.selectedSantri.length === 1 && printIzinData.selectedSantri[0].kelas) {
+            $('#print_kelas').val(printIzinData.selectedSantri[0].kelas);
+        }
+
+        updatePrintPreview();
+        updatePrintButton();
+    });
+
+    // Input change handlers
+    $('#print_tujuan_guru, #print_kelas').on('input', function () {
+        updatePrintPreview();
+        updatePrintButton();
+    });
+
+    // Generate preview text
+    function generatePreviewText() {
+        let now = new Date();
+        let tanggal = now.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        let tujuanGuru = $('#print_tujuan_guru').val() || '...';
+        let kelas = $('#print_kelas').val() || '-';
+        let alasan = printIzinData.kategori === 'sakit' ? 'Sakit' : 'Izin Pulang';
+
+        let namaList = printIzinData.selectedSantri.map(s => s.nama).join('\n          ') || '-';
+
+        // Generate preview nomor surat
+        let month = now.getMonth(); // 0-11
+        let romanMonths = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+        let romanMonth = romanMonths[month];
+        let year = now.getFullYear();
+        let previewNomor = `012/SKA.001/PPMH/${romanMonth}/${year}`;
+
+        return `================================
+   PONDOK PESANTREN MAMBA'UL   
+           HUDA              
+       PAJOMBLANGAN          
+================================
+      SURAT IZIN SEKOLAH      
+   NO: ${previewNomor}
+--------------------------------
+
+Kepada Yth.
+Bapak/Ibu Guru ${tujuanGuru}
+
+Assalamu'alaikum Wr. Wb.
+
+Dengan hormat, melalui surat 
+ini kami memberitahukan bahwa:
+
+Nama    : ${namaList}
+Kelas   : ${kelas}
+Ket     : Izin tidak mengikuti
+          KBM
+Tanggal : ${tanggal}
+Alasan  : ${alasan}
+
+Demikian surat ini kami 
+sampaikan. Atas perhatian 
+Bapak/Ibu, kami ucapkan 
+terima kasih.
+
+Wassalamu'alaikum Wr. Wb.
+
+Hormat kami,
+
+
+
+Pengurus Izin
+================================`;
+    }
+
+    // Update preview
+    function updatePrintPreview() {
+        $('#print_preview').text(generatePreviewText());
+    }
+
+    // Update print button state
+    function updatePrintButton() {
+        let canPrint = printIzinData.selectedSantri.length > 0 &&
+            $('#print_tujuan_guru').val().trim() !== '' &&
+            $('#print_kelas').val().trim() !== '';
+        $('#btn_print_izin').prop('disabled', !canPrint);
+    }
+
+    // Check QZ Tray connection status
+    window.checkQzStatus = async function () {
+        $('#qz_status').text('Mengecek...').removeClass('text-success text-danger').addClass('text-warning');
+
+        try {
+            if (typeof QzPrint !== 'undefined') {
+                let connected = await QzPrint.init();
+                if (connected) {
+                    $('#qz_status').text('Terhubung').removeClass('text-warning text-danger').addClass('text-success');
+                } else {
+                    $('#qz_status').text('Tidak Terhubung').removeClass('text-warning text-success').addClass('text-danger');
+                }
+            } else {
+                $('#qz_status').text('QZ Tray tidak ditemukan').removeClass('text-warning text-success').addClass('text-danger');
+            }
+        } catch (e) {
+            $('#qz_status').text('Error: ' + e.message).removeClass('text-warning text-success').addClass('text-danger');
+        }
+    };
+
+    // Print button click
+    $('#btn_print_izin').click(async function () {
+        if (printIzinData.selectedSantri.length === 0) {
+            Swal.fire('Error', 'Pilih minimal 1 santri', 'error');
+            return;
+        }
+
+        let tujuanGuru = $('#print_tujuan_guru').val().trim();
+        let kelas = $('#print_kelas').val().trim();
+
+        if (!tujuanGuru || !kelas) {
+            Swal.fire('Error', 'Lengkapi field Tujuan Guru dan Kelas', 'error');
+            return;
+        }
+
+        // Show loading
+        Swal.fire({
+            title: 'Memproses...',
+            html: 'Menggenerate nomor surat...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        try {
+            // Generate nomor surat via API
+            let response = await $.ajax({
+                url: 'api/print-izin.php',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    kategori: printIzinData.kategori,
+                    santri_ids: printIzinData.selectedSantri.map(s => s.id),
+                    santri_names: printIzinData.selectedSantri.map(s => s.nama),
+                    tujuan_guru: tujuanGuru,
+                    kelas: kelas,
+                    tanggal: new Date().toISOString().split('T')[0]
+                })
+            });
+
+            if (!response.success) {
+                throw new Error(response.message || 'Gagal generate nomor surat');
+            }
+
+            printIzinData.nomorSurat = response.nomor_surat;
+
+            Swal.update({ html: 'Mengirim ke printer...' });
+
+            // Print via QZ Tray
+            if (typeof QzPrint !== 'undefined' && QzPrint.isConnected()) {
+                let now = new Date();
+                let printData = {
+                    nomorSurat: printIzinData.nomorSurat,
+                    tujuanGuru: tujuanGuru,
+                    santriNames: printIzinData.selectedSantri.map(s => s.nama),
+                    kelas: kelas,
+                    tanggal: now.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+                    kategori: printIzinData.kategori
+                };
+
+                await QzPrint.print(printData);
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    html: `Surat berhasil dicetak<br><strong>No: ${printIzinData.nomorSurat}</strong>`,
+                    confirmButtonText: 'OK'
+                });
+
+                // Close modal
+                bootstrap.Modal.getInstance(document.getElementById('modalPrintIzin')).hide();
+            } else {
+                // QZ Tray not available - send to print queue (for mobile/remote printing)
+                Swal.update({ html: 'Mengirim ke antrian print...' });
+
+                let now = new Date();
+                let printJobData = {
+                    nomorSurat: printIzinData.nomorSurat,
+                    tujuanGuru: tujuanGuru,
+                    santriNames: printIzinData.selectedSantri.map(s => s.nama),
+                    kelas: kelas,
+                    tanggal: now.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+                    kategori: printIzinData.kategori
+                };
+
+                let queueResponse = await $.ajax({
+                    url: 'api/print-queue.php?action=add',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        job_type: 'surat_izin',
+                        job_data: printJobData
+                    })
+                });
+
+                if (queueResponse.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Dikirim ke Antrian!',
+                        html: `Surat akan dicetak otomatis oleh Print Server<br><strong>No: ${printIzinData.nomorSurat}</strong><br><small class="text-muted">Job ID: #${queueResponse.job_id}</small>`,
+                        confirmButtonText: 'OK'
+                    });
+                    bootstrap.Modal.getInstance(document.getElementById('modalPrintIzin')).hide();
+                } else {
+                    throw new Error(queueResponse.message || 'Gagal mengirim ke antrian');
+                }
+            }
+
+        } catch (error) {
+            console.error('Print error:', error);
+            Swal.fire('Error', error.message || 'Terjadi kesalahan', 'error');
+        }
+    });
 });

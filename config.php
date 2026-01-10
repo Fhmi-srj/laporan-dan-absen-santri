@@ -74,7 +74,19 @@ function verifyCsrfToken($token)
 // Auth Helper
 function isLoggedIn()
 {
-    return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
+    // Check session first
+    if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
+        return true;
+    }
+
+    // If no session, try to validate remember token
+    if (!empty($_COOKIE['remember_token']) && !empty($_COOKIE['remember_user'])) {
+        require_once __DIR__ . '/functions.php';
+        $user = validateRememberToken();
+        return $user !== null;
+    }
+
+    return false;
 }
 
 function getCurrentUser()

@@ -166,6 +166,7 @@ $extraStyles = <<<'CSS'
     .theme-pelanggaran { color: #db2777; background: #fdf2f8; }
     .theme-paket { color: #3b82f6; background: #eff6ff; }
     .theme-hafalan { color: #3b82f6; background: #dbeafe; }
+    .theme-izin-sekolah { color: #059669; background: #d1fae5; }
     
     #table-aktivitas { width: 100% !important; }
     #table-aktivitas thead th {
@@ -334,6 +335,39 @@ $extraStyles = <<<'CSS'
         .card-header-custom { flex-direction: column; align-items: flex-start !important; padding: 1rem; }
         .header-tools-wrapper { width: 100%; display: flex; flex-direction: column; gap: 0.75rem; }
     }
+    
+    /* Print Izin Checkbox Styling */
+    .print-santri-check {
+        width: 20px !important;
+        height: 20px !important;
+        margin-right: 12px !important;
+        margin-top: 0 !important;
+        cursor: pointer;
+        accent-color: #059669;
+        flex-shrink: 0;
+    }
+    .print-santri-check:checked {
+        background-color: #059669;
+        border-color: #059669;
+    }
+    #print_santri_list .form-check {
+        display: flex;
+        align-items: flex-start;
+        padding: 12px;
+        margin: 0;
+        border-bottom: 1px solid #e2e8f0;
+        transition: background-color 0.2s;
+    }
+    #print_santri_list .form-check:last-child {
+        border-bottom: none;
+    }
+    #print_santri_list .form-check:hover {
+        background-color: #f0fdf4 !important;
+    }
+    #print_santri_list .form-check-label {
+        cursor: pointer;
+        flex: 1;
+    }
 </style>
 CSS;
 ?>
@@ -446,10 +480,16 @@ CSS;
                                 </div>
                             <?php endif; ?>
                             <?php if ($role === 'admin' || $role === 'guru'): ?>
-                                <div class="col-12">
+                                <div class="col-6">
                                     <button onclick="handleCategoryClick('hafalan')" class="cat-btn">
                                         <div class="cat-icon-box theme-hafalan"><i class="fas fa-quran"></i></div>
                                         <span class="fw-bold small">Hafalan</span>
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button onclick="openPrintIzinModal()" class="cat-btn">
+                                        <div class="cat-icon-box theme-izin-sekolah"><i class="fas fa-print"></i></div>
+                                        <span class="fw-bold small">Izin Sekolah</span>
                                     </button>
                                 </div>
                             <?php endif; ?>
@@ -607,14 +647,14 @@ CSS;
                                     <label class="form-label-custom" id="lbl_foto_1">FOTO BUKTI <span
                                             class="text-muted fw-normal">(Opsional)</span></label>
                                     <div class="photo-upload-wrapper" id="wrapper_foto_1">
-                                        <input type="file" name="foto_dokumen_1" id="input_foto_1"
-                                            class="d-none" accept="image/*"
+                                        <input type="file" name="foto_dokumen_1" id="input_foto_1" class="d-none"
+                                            accept="image/*"
                                             onchange="handlePhotoSelect(this, 'preview_foto_1', 'wrapper_foto_1')">
-                                        <input type="file" id="camera_foto_1" class="d-none" 
-                                            accept="image/*" capture="environment"
+                                        <input type="file" id="camera_foto_1" class="d-none" accept="image/*"
+                                            capture="environment"
                                             onchange="handlePhotoSelect(this, 'preview_foto_1', 'wrapper_foto_1', 'input_foto_1')">
                                         <div class="photo-upload-buttons" id="buttons_foto_1">
-                                            <button type="button" class="btn-photo-upload btn-camera" 
+                                            <button type="button" class="btn-photo-upload btn-camera"
                                                 onclick="document.getElementById('camera_foto_1').click()">
                                                 <i class="fas fa-camera"></i> Ambil Foto
                                             </button>
@@ -625,7 +665,7 @@ CSS;
                                         </div>
                                         <div class="photo-preview-container d-none" id="container_foto_1">
                                             <img id="preview_foto_1" alt="Preview">
-                                            <button type="button" class="btn-remove-photo" 
+                                            <button type="button" class="btn-remove-photo"
                                                 onclick="removePhoto('input_foto_1', 'preview_foto_1', 'wrapper_foto_1', 'container_foto_1', 'buttons_foto_1')">
                                                 <i class="fas fa-times"></i>
                                             </button>
@@ -635,14 +675,14 @@ CSS;
                                 <div class="col-md-6 d-none" id="col_foto_2">
                                     <label class="form-label-custom" id="lbl_foto_2">FOTO PENERIMA</label>
                                     <div class="photo-upload-wrapper" id="wrapper_foto_2">
-                                        <input type="file" name="foto_dokumen_2" id="input_foto_2"
-                                            class="d-none" accept="image/*"
+                                        <input type="file" name="foto_dokumen_2" id="input_foto_2" class="d-none"
+                                            accept="image/*"
                                             onchange="handlePhotoSelect(this, 'preview_foto_2', 'wrapper_foto_2')">
-                                        <input type="file" id="camera_foto_2" class="d-none" 
-                                            accept="image/*" capture="environment"
+                                        <input type="file" id="camera_foto_2" class="d-none" accept="image/*"
+                                            capture="environment"
                                             onchange="handlePhotoSelect(this, 'preview_foto_2', 'wrapper_foto_2', 'input_foto_2')">
                                         <div class="photo-upload-buttons" id="buttons_foto_2">
-                                            <button type="button" class="btn-photo-upload btn-camera" 
+                                            <button type="button" class="btn-photo-upload btn-camera"
                                                 onclick="document.getElementById('camera_foto_2').click()">
                                                 <i class="fas fa-camera"></i> Ambil Foto
                                             </button>
@@ -653,7 +693,7 @@ CSS;
                                         </div>
                                         <div class="photo-preview-container d-none" id="container_foto_2">
                                             <img id="preview_foto_2" alt="Preview">
-                                            <button type="button" class="btn-remove-photo" 
+                                            <button type="button" class="btn-remove-photo"
                                                 onclick="removePhoto('input_foto_2', 'preview_foto_2', 'wrapper_foto_2', 'container_foto_2', 'buttons_foto_2')">
                                                 <i class="fas fa-times"></i>
                                             </button>
@@ -767,10 +807,134 @@ CSS;
     </div>
 </div>
 
+<!-- MODAL PRINT IZIN SEKOLAH -->
+<div class="modal fade" id="modalPrintIzin" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-3">
+            <div class="modal-header text-white border-0"
+                style="background: linear-gradient(135deg, #059669 0%, #10b981 100%);">
+                <h6 class="modal-title fw-bold"><i class="fas fa-print me-2"></i>CETAK SURAT IZIN SEKOLAH</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row g-4">
+                    <!-- Left: Santri Selection -->
+                    <div class="col-lg-7">
+                        <div class="mb-3">
+                            <label class="form-label-custom">PILIH KATEGORI</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="print_kategori" id="print_kat_sakit"
+                                    value="sakit" checked>
+                                <label class="btn btn-outline-danger" for="print_kat_sakit"><i
+                                        class="fas fa-procedures me-1"></i> Sakit</label>
+                                <input type="radio" class="btn-check" name="print_kategori" id="print_kat_izin"
+                                    value="izin_pulang">
+                                <label class="btn btn-outline-warning" for="print_kat_izin"><i
+                                        class="fas fa-home me-1"></i> Izin Pulang</label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label-custom">PILIH SANTRI <span class="text-muted fw-normal">(Max
+                                    5)</span></label>
+                            <div id="print_santri_list" class="border rounded-3 p-2"
+                                style="max-height: 300px; overflow-y: auto; background: #f8fafc;">
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-spinner fa-spin me-1"></i> Memuat data...
+                                </div>
+                            </div>
+                            <small class="text-muted"><span id="print_selected_count">0</span>/5 santri dipilih</small>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label-custom">TUJUAN GURU <span class="text-danger">*</span></label>
+                                <input type="text" id="print_tujuan_guru" class="form-control form-control-custom"
+                                    placeholder="Contoh: Wali Kelas 7A">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-custom">KELAS <span class="text-danger">*</span></label>
+                                <input type="text" id="print_kelas" class="form-control form-control-custom"
+                                    placeholder="Contoh: 7A, 7B, 8C">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Preview -->
+                    <div class="col-lg-5">
+                        <label class="form-label-custom">PREVIEW SURAT</label>
+                        <div id="print_preview" class="border rounded-3 p-3"
+                            style="background: #fffef7; font-family: 'Courier New', monospace; font-size: 11px; white-space: pre-wrap; min-height: 400px; max-height: 450px; overflow-y: auto; line-height: 1.4;">
+                            ================================
+                            PONDOK PESANTREN MAMBA'UL
+                            HUDA
+                            PAJOMBLANGAN
+                            ================================
+                            SURAT IZIN SEKOLAH
+                            NO: ---/SKA.001/PPMH/-/----
+                            --------------------------------
+
+                            Kepada Yth.
+                            Bapak/Ibu Guru ...
+
+                            Assalamu'alaikum Wr. Wb.
+
+                            Dengan hormat, melalui surat
+                            ini kami memberitahukan bahwa:
+
+                            Nama : -
+                            Kelas : -
+                            Ket : Izin tidak mengikuti
+                            KBM
+                            Tanggal : -
+                            Alasan : -
+
+                            Demikian surat ini kami
+                            sampaikan. Atas perhatian
+                            Bapak/Ibu, kami ucapkan
+                            terima kasih.
+
+                            Wassalamu'alaikum Wr. Wb.
+
+                            Hormat kami,
+
+
+
+                            Pengurus Izin
+                            ================================
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QZ Tray Status -->
+                <div class="mt-3 p-2 rounded border" id="qz_status_container">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="small">
+                            <i class="fas fa-plug me-1"></i> Status Printer:
+                            <span id="qz_status" class="fw-bold text-warning">Mengecek...</span>
+                        </span>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="checkQzStatus()">
+                            <i class="fas fa-sync-alt"></i> Cek Ulang
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-light">
+                <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-success px-4 fw-bold shadow-sm" id="btn_print_izin" disabled>
+                    <i class="fas fa-print me-1"></i> CETAK SURAT
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.min.js"></script>
+<script src="assets/js/qz-tray-config.js?v=<?= time() ?>"></script>
 <script src="assets/js/aktivitas.js?v=<?= time() ?>"></script>
 <?php include __DIR__ . '/include/footer.php'; ?>

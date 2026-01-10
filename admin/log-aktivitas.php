@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 }
 
 // Filters
-$filterUser = $_GET['user'] ?? '';
+$filterRole = $_GET['role'] ?? '';
 $filterAction = $_GET['action_type'] ?? '';
 $filterDateFrom = $_GET['date_from'] ?? '';
 $filterDateTo = $_GET['date_to'] ?? '';
@@ -46,36 +46,49 @@ $offset = ($page - 1) * $limit;
 $whereClause = "1=1";
 $params = [];
 
-if ($filterUser) {
-    $whereClause .= " AND user_name LIKE ?";
-    $params[] = "%$filterUser%";
+if ($filterRole) {
+    $whereClause .= " AND a.user_id IN (SELECT id FROM users WHERE role = ?)";
+    $params[] = $filterRole;
 }
 if ($filterAction) {
-    $whereClause .= " AND action = ?";
+    $whereClause .= " AND a.action = ?";
     $params[] = $filterAction;
 }
 if ($filterDateFrom) {
-    $whereClause .= " AND DATE(created_at) >= ?";
+    $whereClause .= " AND DATE(a.created_at) >= ?";
     $params[] = $filterDateFrom;
 }
 if ($filterDateTo) {
-    $whereClause .= " AND DATE(created_at) <= ?";
+    $whereClause .= " AND DATE(a.created_at) <= ?";
     $params[] = $filterDateTo;
 }
 
 // Get total count
-$countStmt = $pdo->prepare("SELECT COUNT(*) FROM activity_logs WHERE $whereClause");
+$countStmt = $pdo->prepare("SELECT COUNT(*) FROM activity_logs a WHERE $whereClause");
 $countStmt->execute($params);
 $total = $countStmt->fetchColumn();
 $totalPages = ceil($total / $limit);
 
-// Get logs
-$stmt = $pdo->prepare("SELECT * FROM activity_logs WHERE $whereClause ORDER BY created_at DESC LIMIT $limit OFFSET $offset");
+// Get logs with role
+$stmt = $pdo->prepare("
+    SELECT a.*, u.role as user_role 
+    FROM activity_logs a 
+    LEFT JOIN users u ON a.user_id = u.id 
+    WHERE $whereClause 
+    ORDER BY a.created_at DESC 
+    LIMIT $limit OFFSET $offset
+");
 $stmt->execute($params);
 $logs = $stmt->fetchAll();
 
-// Get unique users for filter
-$users = $pdo->query("SELECT DISTINCT user_name FROM activity_logs ORDER BY user_name")->fetchAll(PDO::FETCH_COLUMN);
+// Get unique roles from activity logs
+$roles = $pdo->query("
+    SELECT DISTINCT u.role 
+    FROM activity_logs a 
+    JOIN users u ON a.user_id = u.id 
+    WHERE u.role IS NOT NULL 
+    ORDER BY u.role
+")->fetchAll(PDO::FETCH_COLUMN);
 
 $flash = getFlash();
 ?>
@@ -95,6 +108,8 @@ $flash = getFlash();
     .badge-action {
         font-size: 0.7rem;
         padding: 0.35em 0.65em;
+        background: #3b82f6;
+        color: white;
     }
 
     .badge-LOGIN {
@@ -157,11 +172,12 @@ $flash = getFlash();
         <div class="card-body py-3">
             <form method="GET" class="row g-2 align-items-end">
                 <div class="col-md-2">
-                    <label class="form-label small fw-bold text-muted">USER</label>
-                    <select name="user" class="form-select form-select-sm">
+                    <label class="form-label small fw-bold text-muted">ROLE</label>
+                    <select name="role" class="form-select form-select-sm">
                         <option value="">Semua</option>
-                        <?php foreach ($users as $u): ?>
-                            <option value="<?= e($u) ?>" <?= $filterUser === $u ? 'selected' : '' ?>><?= e($u) ?></option>
+                        <?php foreach ($roles as $r): ?>
+                            <option value="<?= e($r) ?>" <?= $filterRole === $r ? 'selected' : '' ?>><?= ucfirst(e($r)) ?>
+                            </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -218,7 +234,7 @@ $flash = getFlash();
                     <tr>
                         <th width="40"><input type="checkbox" id="select-all" class="form-check-input"></th>
                         <th>No</th>
-                        <th>User</th>
+                        <th>Role</th>
                         <th>Device</th>
                         <th>Aktivitas</th>
                         <th>Detail</th>
@@ -237,7 +253,7 @@ $flash = getFlash();
                                 <td><input type="checkbox" class="form-check-input row-checkbox" value="<?= $log['id'] ?>"></td>
                                 <td><?= $offset + $i + 1 ?></td>
                                 <td>
-                                    <div class="fw-bold"><?= e($log['user_name']) ?></div>
+                                    <div class="fw-bold"><?= ucfirst(e($log['user_role'] ?? '-')) ?></div>
                                 </td>
                                 <td><span class="badge device-badge"><?= e($log['device_name']) ?></span></td>
                                 <td>
@@ -282,7 +298,7 @@ $flash = getFlash();
                 <?php for ($p = 1; $p <= $totalPages; $p++): ?>
                     <li class="page-item <?= $p === $page ? 'active' : '' ?>">
                         <a class="page-link"
-                            href="?page=<?= $p ?>&user=<?= e($filterUser) ?>&action_type=<?= e($filterAction) ?>&date_from=<?= e($filterDateFrom) ?>&date_to=<?= e($filterDateTo) ?>"><?= $p ?></a>
+                            href="?page=<?= $p ?>&role=<?= e($filterRole) ?>&action_type=<?= e($filterAction) ?>&date_from=<?= e($filterDateFrom) ?>&date_to=<?= e($filterDateTo) ?>"><?= $p ?></a>
                     </li>
                 <?php endfor; ?>
             </ul>

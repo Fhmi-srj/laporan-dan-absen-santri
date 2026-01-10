@@ -16,6 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
     $deviceToken = $_POST['device_token'] ?? '';
+    $rememberMe = isset($_POST['remember_me']);
 
     if (empty($email) || empty($password)) {
         $error = 'Email dan password wajib diisi.';
@@ -51,6 +52,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Log login activity
             logActivity('LOGIN', 'users', $user['id'], $user['name'], null, null, 'Pengguna berhasil masuk');
+
+            // Generate remember token if checkbox is checked
+            if ($rememberMe) {
+                generateRememberToken($user['id']);
+            }
 
             header('Location: index.php?fresh_login=1');
             exit;
@@ -450,6 +456,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .toggle-password:hover {
             color: var(--primary-color);
         }
+
+        .remember-me {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #64748b;
+            gap: 10px;
+            user-select: none;
+            margin-top: -0.5rem;
+            margin-bottom: 0;
+            text-transform: none;
+            letter-spacing: normal;
+        }
+
+        .remember-me input[type="checkbox"] {
+            display: none;
+        }
+
+        .remember-me .checkmark {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #cbd5e1;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            background: #f8fafc;
+            flex-shrink: 0;
+        }
+
+        .remember-me .checkmark i {
+            font-size: 12px;
+            color: white;
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.2s ease;
+        }
+
+        .remember-me input[type="checkbox"]:checked+.checkmark {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .remember-me input[type="checkbox"]:checked+.checkmark i {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .remember-me:hover .checkmark {
+            border-color: var(--primary-color);
+        }
+
+        .remember-me span.label-text {
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .remember-me:hover span.label-text {
+            color: var(--primary-color);
+        }
     </style>
 </head>
 
@@ -505,6 +574,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <i class="fas fa-eye" id="toggleIcon"></i>
                             </button>
                         </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="remember-me">
+                            <input type="checkbox" name="remember_me" id="remember_me">
+                            <span class="checkmark"><i class="fas fa-check"></i></span>
+                            <span class="label-text">Ingat Saya</span>
+                        </label>
                     </div>
 
                     <button type="submit" class="btn-login" id="btnLogin">

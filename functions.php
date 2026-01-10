@@ -589,3 +589,111 @@ function permanentDelete($table, $id)
         return false;
     }
 }
+
+/**
+ * Generate Remember Me token and store in database
+ * Token expires in 30 days
+ */
+function generateRememberToken($userId)
+{
+    try {
+        $pdo = getDB();
+
+        // Generate a secure random token
+        $token = bin2hex(random_bytes(32));
+        $tokenHash = hash('sha256', $token);
+        $expiresAt = date('Y-m-d H:i:s', strtotime('+30 days'));
+
+        // Delete any existing tokens for this user
+        $stmt = $pdo->prepare("DELETE FROM remember_tokens WHERE user_id = ?");
+        $stmt->execute([$userId]);
+
+        // Insert new token
+        $stmt = $pdo->prepare("INSERT INTO remember_tokens (user_id, token_hash, expires_at) VALUES (?, ?, ?)");
+        $stmt->execute([$userId, $tokenHash, $expiresAt]);
+
+        // Set cookie with plain token (will be hashed when validating)
+        $cookieExpiry = time() + (30 * 24 * 60 * 60); // 30 days
+        setcookie('remember_token', $token, $cookieExpiry, '/', '', false, true);
+        setcookie('remember_user', $userId, $cookieExpiry, '/', '', false, true);
+
+        return true;
+    } catch (Exception $e) {
+        error_log("Remember token error: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Validate Remember Me token from cookie and auto-login
+ * Returns user data if valid, null otherwise
+ */
+function validateRememberToken()
+{
+    if (empty($_COOKIE['remember_token']) || empty($_COOKIE['remember_user'])) {
+        return null;
+    }
+
+    try {
+        $pdo = getDB();
+        $token = $_COOKIE['remember_token'];
+        $userId = intval($_COOKIE['remember_user']);
+        $tokenHash = hash('sha256', $token);
+
+        // Find valid token
+        $stmt = $pdo->prepare("
+            SELECT rt.*, u.* 
+            FROM remember_tokens rt 
+            JOIN users u ON rt.user_id = u.id 
+            WHERE rt.user_id = ? 
+              AND rt.token_hash = ? 
+              AND rt.expires_at > NOW()
+              AND u.deleted_at IS NULL
+        ");
+        $stmt->execute([$userId, $tokenHash]);
+        $result = $stmt->fetch();
+
+        if ($result) {
+            // Set session
+            $_SESSION['user_id'] = $result['user_id'];
+            $_SESSION['user_name'] = $result['name'];
+            $_SESSION['user_role'] = $result['role'];
+
+            // Regenerate token for security (token rotation)
+            generateRememberToken($result['user_id']);
+
+            return $result;
+        }
+
+        // Invalid token, clear cookies
+        clearRememberToken($userId);
+        return null;
+    } catch (Exception $e) {
+        error_log("Remember token validation error: " . $e->getMessage());
+        return null;
+    }
+}
+
+/**
+ * Clear Remember Me token from database and cookies
+ */
+function clearRememberToken($userId = null)
+{
+    try {
+        if ($userId) {
+            $pdo = getDB();
+            $stmt = $pdo->prepare("DELETE FROM remember_tokens WHERE user_id = ?");
+            $stmt->execute([$userId]);
+        }
+
+        // Clear cookies
+        $pastTime = time() - 3600;
+        setcookie('remember_token', '', $pastTime, '/');
+        setcookie('remember_user', '', $pastTime, '/');
+
+        return true;
+    } catch (Exception $e) {
+        error_log("Clear remember token error: " . $e->getMessage());
+        return false;
+    }
+}
